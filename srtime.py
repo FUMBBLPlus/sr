@@ -4,6 +4,7 @@ import math
 import pytz
 
 ZONE = 'Europe/Stockholm'
+UTC = pytz.utc
 TZ = pytz.timezone(ZONE)
 ISO_DATE_FMT = '%Y-%m-%d'
 ISO_TIME_FMT_S = '%H:%M:%S'
@@ -12,13 +13,13 @@ S_DELIM_ISO_FMT_S = ISO_DATE_FMT + ' ' + ISO_TIME_FMT_S
 
 TURNTIME = datetime.timedelta(seconds=23400)  # 6 hours 30 mins
 ZERODATE = datetime.date(2002, 12, 30)
-ZEROTIME = TZ.localize(datetime.datetime(2002, 12, 30, 6, 30))
+ZEROTIME = UTC.localize(datetime.datetime(2002, 12, 30, 6, 30))
 
 ONEDAY = datetime.timedelta(1)
 ONEWEEK = datetime.timedelta(7)
 
 
-def strptime(s, fmt=None):
+def strptime(s, fmt=None, *, is_dst=None):
   dt = None
   if fmt is None:
     for fmt in (S_DELIM_ISO_FMT_S, ISO_FMT_F, ISO_DATE_FMT):
@@ -32,8 +33,8 @@ def strptime(s, fmt=None):
       raise ValueError('invalid datetime string')
   else:
     dt = datetime.datetime.strptime(s, fmt)
-  if not tz_aware(d):
-    dt = TZ.localize(d)
+  if not tz_aware(dt):
+    dt = TZ.localize(dt, is_dst=is_dst)
   return dt
 
 
