@@ -1,6 +1,6 @@
 import json
 import urllib.request
-
+import xml.etree.ElementTree as ET
 
 host = 'fumbbl.com'
 
@@ -16,6 +16,22 @@ def _get_json_obj(url, force_request=False):
   obj = json.loads(data)
   cache[url] = obj
   return obj
+
+
+def _get_xml_obj(url, force_request=False):
+  url = url.lower()
+  if not force_request and url in cache:
+    return cache[url]
+  response = urllib.request.urlopen(url)
+  data = response.read()
+  obj = ET.fromstring(data.decode('utf8'))
+  cache[url] = obj
+  return obj
+
+
+def old_get__group_tournaments(groupId, *, force_request=False):
+  url = f'https://{host}/xml:group?id={groupId}&op=tourneys'
+  return _get_xml_obj(url, force_request)
 
 
 def get__group_tournaments(groupId, *, force_request=False):
