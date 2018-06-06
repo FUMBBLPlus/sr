@@ -3,6 +3,9 @@ import math
 
 import pytz
 
+import srdata
+
+
 ZONE = 'Europe/Stockholm'
 UTC = pytz.utc
 TZ = pytz.timezone(ZONE)
@@ -11,12 +14,37 @@ ISO_TIME_FMT_S = '%H:%M:%S'
 ISO_FMT_F = '%Y-%m-%dT%H:%M:%S.%f'
 S_DELIM_ISO_FMT_S = ISO_DATE_FMT + ' ' + ISO_TIME_FMT_S
 
-TURNTIME = datetime.timedelta(seconds=23400)  # 6 hours 30 mins
 ZERODATE = datetime.date(2002, 12, 30)
-ZEROTIME = UTC.localize(datetime.datetime(2002, 12, 30, 6, 30))
+ZEROTIME = TZ.localize(datetime.datetime(2002, 12, 30, 8, 00))
 
+MICROSECOND = datetime.timedelta(microseconds=1)
 ONEDAY = datetime.timedelta(1)
 ONEWEEK = datetime.timedelta(7)
+
+
+def current_weeknr():
+  return weeknr(now())
+
+def now():
+  return datetime.datetime.now(TZ)
+
+
+def report_date(datetimeobj):
+  return weeknr_firstdate(report_weeknr(datetimeobj))
+
+
+def report_weeknr(datetimeobj):
+  return weeknr(datetimeobj) + 1
+
+
+def report_weeknrs():
+  r = set()
+  for row in srdata.data['tournaments']:
+    if row[1] != 0 or row[-2] is None:
+      continue
+    r.add(row[-2])
+    r.add(row[-1])
+  return sorted({w for w in r if w <= current_weeknr()})
 
 
 def strptime(s, fmt=None, *, is_dst=None):
@@ -38,10 +66,6 @@ def strptime(s, fmt=None, *, is_dst=None):
   return dt
 
 
-def now():
-  return datetime.datetime.now(TZ)
-
-
 def tz_aware(datetimeobj):
   dt = datetimeobj
   if dt.tzinfo is not None:
@@ -60,9 +84,20 @@ def weeknr(datetimeobj):
 
 
 def weeknr_firstdate(weeknr):
-  dt = ZEROTIME + weeknr * ONEWEEK
+  dt = weeknr_turntime(weeknr)
   return datetime.date(dt.year, dt.month, dt.day)
 
 
+def weeknr_firsttime(weeknr):
+  return ZEROTIME + weeknr * ONEWEEK
+
+
 def weeknr_lastdate(weeknr):
-  return  weeknr_firstday(weeknr) + ONEWEEK - ONEDAY
+  return  weeknr_firstdate(weeknr) + ONEWEEK - ONEDAY
+
+
+weeknr_turntime = weeknr_firsttime
+
+
+def weeknr_lasttime(weeknr):
+  return  weeknr_firsttime(weeknr) + ONEWEEK - MICROSECOND
