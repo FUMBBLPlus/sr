@@ -22,6 +22,13 @@ def end_time(schedule, *, is_dst=None):
     return srmatch.finished_time(last_match, is_dst=is_dst)
 
 
+def get(tournamentId):
+  if str(tournamentId) in srdata.data["schedule"]:
+    return srdata.data["schedule"][str(tournamentId)]
+  else:
+    return fumbblapi.get__tournament_schedule(tournamentId)
+
+
 def has_filler(schedule):
   teams_ = teams(schedule, with_fillers=True)
   return bool(teams_ & srdata.data["fillerteams"])
