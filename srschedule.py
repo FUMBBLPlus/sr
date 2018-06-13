@@ -23,8 +23,9 @@ def end_time(schedule, *, is_dst=None):
 
 
 def get(tournamentId):
-  if str(tournamentId) in srdata.data["schedule"]:
-    return srdata.data["schedule"][str(tournamentId)]
+  DATA_NAME = "fixed_api_schedule"
+  if str(tournamentId) in srdata.data[DATA_NAME]:
+    return srdata.data[DATA_NAME][str(tournamentId)]
   else:
     return fumbblapi.get__tournament_schedule(tournamentId)
 
@@ -63,6 +64,10 @@ def modified(schedule, *, is_dst=None):
     return None
 
 
+def positions(schedule):
+  return {matchup["position"] for matchup in schedule}
+
+
 report_date = functools.partial(
     _end_time_passer, func=srtime.report_date
 )
@@ -83,10 +88,10 @@ def rounds(schedule):
 
 
 def size(schedule):
-  matchups = {
+  matchups = [
       matchup for matchup in schedule
       if matchup.get('round') == 1
-  }
+  ]
   return len(matchups) * 2
 
 
