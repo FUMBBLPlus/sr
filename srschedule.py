@@ -43,6 +43,15 @@ def highest_match_id(schedule):
     return None
 
 
+def is_elim(schedule):
+  size0 = size(schedule)
+  for r in range(2, rounds(schedule) + 1):
+    size1 = size(schedule, round_=r)
+    if size1 != size0:
+      return True
+  return False
+
+
 def matches(schedule):
   matches_ = {
       matchup["result"]["id"]
@@ -50,6 +59,13 @@ def matches(schedule):
       if matchup.get("result", {}).get("id")
   }
   return matches_
+
+
+def matchups_of_round(schedule, round_):
+  return [
+      matchup for matchup in schedule
+      if matchup.get('round') == round_
+  ]
 
 
 def modified(schedule, *, is_dst=None):
@@ -78,6 +94,72 @@ report_weeknr = functools.partial(
 )
 
 
+def results(schedule):
+  schedule = sort(schedule)
+  teams_ = teams(schedule, round_=None)
+  results_ = {teamId: [] for teamId in teams_}
+  n_rounds = rounds(schedule)
+  is_elim_ = is_elim(schedule)
+  for r in range(1, n_rounds + 1):
+    if (
+        r == n_rounds
+        and not round_started(schedule, r)
+        and not is_elim_
+    ):
+      continue
+      # Sometimes non-elimination format tournaments' round
+      # value is unset by tournament admins and they only
+      # realize that when another round gets drawn after the
+      # intended end of the tournament. They then forfeit all
+      # matches of the last round. SR should not treat these
+      # forfeits as real ones. Example tournamentId: 19144.
+    for li in results_.values():
+      li.append('.')
+    for p in matchups_of_round(schedule, r):
+      re = p.get("result", {"id": 0, "winner": 0})
+      matchId = re["id"]
+      winner = int(re["winner"])
+      if matchId:
+        old_match = fumbblapi.old_get__match(matchId)
+        conceded = srmatch.conceded(old_match)
+        scores = {re["teams"][i]["score"] for i in range(2)}
+        draw = (len(scores) == 1)
+      else:
+        conceded = None
+        draw = False
+      p_teams = {di["id"] for di in p["teams"]}
+      p_teams &= teams_
+      for teamId in p_teams:
+        li = results_[teamId]
+        if matchId and draw and not is_elim_:
+          li[-1] = 'D'  # draw by match
+        elif matchId and teamId == winner:
+          li[-1] = 'W'  # win by match
+        elif matchId and teamId == conceded:
+          li[-1] = 'C'  # conceded on a match
+        elif matchId:
+          li[-1] = 'L'  # loss by match
+        elif teamId == winner and len(p_teams) == 2:
+          li[-1] = 'B'  # bye against a real team
+        elif teamId == winner:
+          li[-1] = 'b'  # bye against a filler team
+        elif winner:
+          li[-1] = 'F'  # fortfeit
+        else:
+          li[-1] = '?'  # pending
+  results_ = {
+      teamId: ''.join(li) for teamId, li in results_.items()
+  }
+  return results_
+
+
+def round_started(schedule, round_):
+  return any(
+      p["result"]["id"]
+      for p in matchups_of_round(schedule, round_)
+  )
+
+
 def rounds(schedule):
   rounds = {
       matchup["round"] for matchup in schedule
@@ -87,21 +169,30 @@ def rounds(schedule):
     return max(rounds)
 
 
-def size(schedule):
-  matchups = [
-      matchup for matchup in schedule
-      if matchup.get('round') == 1
-  ]
-  return len(matchups) * 2
+def size(schedule, *, round_=1):
+  return len(matchups_of_round(schedule, round_)) * 2
 
 
-def teams(schedule, with_fillers=False):
-  teams_ = {
-      team["id"]
-      for matchup in schedule
-      for team in matchup["teams"]
-      if matchup.get('round') == 1
-  }
+def sort(schedule):
+  return sorted(schedule, key=lambda p: (
+      p["round"],
+      p["position"],
+  ))
+
+
+def teams(schedule, with_fillers=False, round_=1):
+  if round_:
+    teams_ = {
+        team["id"]
+        for matchup in matchups_of_round(schedule, round_)
+        for team in matchup["teams"]
+    }
+  else:
+    teams_ = {
+        team["id"]
+        for matchup in schedule
+        for team in matchup["teams"]
+    }
   if not with_fillers:
     teams_ -= srdata.data["fillerteams"]
   return teams_

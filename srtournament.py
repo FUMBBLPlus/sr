@@ -1,10 +1,8 @@
-import fumbblapi
 import srdata
 
 
-def format_(groupId, tournamentId):
-  ts = fumbblapi.old_get__group_tournaments(groupId)
-  for t in ts.iter('tournament'):
+def format_(old_group_tournaments, tournamentId):
+  for t in old_group_tournaments.iter('tournament'):
     if int(t.attrib["id"]) == tournamentId:
       return t.find('type').text
 
