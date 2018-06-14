@@ -1,4 +1,5 @@
 import functools
+import math
 
 import fumbblapi
 import srdata
@@ -45,7 +46,12 @@ def highest_match_id(schedule):
 
 def is_elim(schedule):
   size0 = size(schedule)
-  for r in range(2, rounds(schedule) + 1):
+  rounds_ = {
+      matchup["round"] for matchup in schedule
+      if matchup.get('round') is not None
+  }
+  R = max(rounds_)
+  for r in range(2, R + 1):
     size1 = size(schedule, round_=r)
     if size1 != size0:
       return True
@@ -94,25 +100,14 @@ report_weeknr = functools.partial(
 )
 
 
-def results(schedule):
+def results(schedule, *, is_elim_=None):
+  if is_elim_ is None:
+    is_elim_ = is_elim(schedule)
   schedule = sort(schedule)
   teams_ = teams(schedule, round_=None)
   results_ = {teamId: [] for teamId in teams_}
-  n_rounds = rounds(schedule)
-  is_elim_ = is_elim(schedule)
+  n_rounds = rounds(schedule, is_elim_=is_elim_)
   for r in range(1, n_rounds + 1):
-    if (
-        r == n_rounds
-        and not round_started(schedule, r)
-        and not is_elim_
-    ):
-      continue
-      # Sometimes non-elimination format tournaments' round
-      # value is unset by tournament admins and they only
-      # realize that when another round gets drawn after the
-      # intended end of the tournament. They then forfeit all
-      # matches of the last round. SR should not treat these
-      # forfeits as real ones. Example tournamentId: 19144.
     for li in results_.values():
       li.append('.')
     for p in matchups_of_round(schedule, r):
@@ -160,13 +155,34 @@ def round_started(schedule, round_):
   )
 
 
-def rounds(schedule):
-  rounds = {
-      matchup["round"] for matchup in schedule
-      if matchup.get('round') is not None
-  }
-  if rounds:
-    return max(rounds)
+def rounds(schedule, is_elim_=None):
+  if is_elim_ is None:
+    is_elim_ = is_elim(schedule)
+  if is_elim_:
+    p = max(positions(matchups_of_round(schedule, 1)))
+    # p=1 for final; 3 for semi-final; 7 for quaterfinal; etc.
+    r = int(math.log(p + 1, 2))
+  else:
+    rounds_ = {
+        matchup["round"] for matchup in schedule
+        if matchup.get('round') is not None
+    }
+    if not rounds_:
+      r = 0
+    else:
+      r = max(rounds_)
+    # Sometimes non-elimination format tournaments' round value
+    # is unset by tournament admins and they only realize that
+    # when another round gets drawn after the intended end of
+    # the tournament. They then forfeit all matches of the last
+    # round. SR should not treat these forfeits as real ones.
+    # Example tournamentId: 19144.
+    round_started_ = False
+    while r and not round_started_:
+      round_started_ = round_started(schedule, r)
+      if not round_started_:
+        r -= 1
+  return r
 
 
 def size(schedule, *, round_=1):
