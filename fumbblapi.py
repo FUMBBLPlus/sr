@@ -39,6 +39,17 @@ def old_get__match(matchId, *, force_request=False):
   return _get_xml_obj(url, force_request).find('match')
 
 
+def deriv_get__group_tournament(groupId, tournamentId, *,
+      force_request=False
+  ):
+  group_tournaments = get__group_tournaments(
+        groupId, force_request=force_request
+  )
+  for tournament_data in group_tournaments:
+    if tournament_data["id"] == tournamentId:
+      return tournament_data
+
+
 def get__group_tournaments(groupId, *, force_request=False):
   url = f'https://{host}/api/group/tournaments/{groupId}'
   return _get_json_obj(url, force_request)

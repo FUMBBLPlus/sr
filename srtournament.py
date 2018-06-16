@@ -7,21 +7,22 @@ def format_(old_group_tournaments, tournamentId):
       return t.find('type').text
 
 
-def get_class_by_teams(rank, level, format__, teams):
-  class3 = f'{rank}/{level}/{format__}'
-  alloc_keys0 = srdata.data["points"].keys()
-  alloc_keys = {k for k in alloc_keys0 if k.startswith(class3)}
-  size_classes0 = [
-      a.split('/')[-1].split('-') for a in alloc_keys
-  ]
-  size_classes1 = [
-      ([t[0], t[1]] if len(t)==1 else t) for t in size_classes0
-  ]
-  size_classes = sorted(
-      [range(int(t[0]), int(t[1]) + 1) for t in size_classes1],
-      key=lambda r: (r.start, r.stop)
-  )
-  for r in size_classes:
-    if teams in r:
-      class4 = f'{class3}/{r.start}-{r.stop-1}'
-      return class4
+def prevnext_title(tournament):
+  TI = srdata.TournamentIdx
+  result = [None, None]
+  title = None
+  if TI.TITLE < len(tournament):
+    title = tournament[TI.TITLE]
+  if title:
+    i = 0
+    for t in srdata.data["tournaments"]:
+      if len(t) <= TI.TITLE:
+          continue
+      if t[TI.TITLE] != title:
+          continue
+      if t[TI.ID] < tournament[TI.ID]:
+        result[0] = t
+      elif tournament[TI.ID] < t[TI.ID]:
+        result[1] = t
+        break
+  return result

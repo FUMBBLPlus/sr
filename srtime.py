@@ -38,13 +38,13 @@ def report_weeknr(datetimeobj):
 
 
 def report_weeknrs():
+  TI = srdata.TournamentIdx
   r = set()
   for row in srdata.data['tournaments']:
-    if row[1] != 0 or row[-2] is None:
-      continue
-    r.add(row[-2])
-    r.add(row[-1])
-  return sorted({w for w in r if w <= current_weeknr()})
+    if row[TI.TOP_ID] == 0 and row[TI.WINNER_ID]:
+      r.add(row[TI.ENTER_WEEKNR])
+      r.add(row[TI.EXIT_WEEKNR])
+  return sorted({w for w in r if w <= current_weeknr() + 1})
 
 
 def strptime(s, fmt=None, *, is_dst=None):

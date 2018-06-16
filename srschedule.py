@@ -1,4 +1,5 @@
 import functools
+import json
 import math
 
 import fumbblapi
@@ -29,6 +30,27 @@ def get(tournamentId):
     return srdata.data[DATA_NAME][str(tournamentId)]
   else:
     return fumbblapi.get__tournament_schedule(tournamentId)
+
+
+def get_results(tournamentId, *, is_elim_=None):
+  tournament = srdata.data["tournament"][tournamentId]
+  I = srdata.TournamentIdx
+  foldernum = int(tournamentId) // 1000 * 1000
+  foldername = f'{foldernum:0>6}'
+  folderpath = srdata.directory / 'results' / foldername
+  path = folderpath / f'{tournamentId}.json'
+  if tournament[I.WINNER_ID] and path.exists():
+    with path.open() as f:
+      results_0 = json.load(f)  # teamIds are strings
+    results_ = {int(t): r for t, r in results_0.items()}
+  else:
+    schedule = get(tournamentId)
+    results_ = results(schedule, is_elim_=is_elim_)
+    if tournament[I.WINNER_ID]:
+      folderpath.mkdir(parents=True, exist_ok=True)
+      with path.open('w') as f:
+        json.dump(results_, f, indent='\t', sort_keys=True)
+  return results_
 
 
 def has_filler(schedule):
@@ -148,14 +170,15 @@ def results(schedule, *, is_elim_=None):
   return results_
 
 
-def round_started(schedule, round_):
-  return any(
-      p["result"]["id"]
-      for p in matchups_of_round(schedule, round_)
-  )
+def round_forfeited(schedule, round_):
+  matchups = matchups_of_round(schedule, round_)
+  if all(p.get("result") for p in matchups):
+    if all((p["result"]["id"] == 0) for p in matchups):
+      return True
+  return False
 
 
-def rounds(schedule, is_elim_=None):
+def rounds(schedule, *, is_elim_=None):
   if is_elim_ is None:
     is_elim_ = is_elim(schedule)
   if is_elim_:
@@ -177,10 +200,10 @@ def rounds(schedule, is_elim_=None):
     # the tournament. They then forfeit all matches of the last
     # round. SR should not treat these forfeits as real ones.
     # Example tournamentId: 19144.
-    round_started_ = False
-    while r and not round_started_:
-      round_started_ = round_started(schedule, r)
-      if not round_started_:
+    f = True
+    while r and r > 1 and f:
+      f = round_forfeited(schedule, r)
+      if f:
         r -= 1
   return r
 
