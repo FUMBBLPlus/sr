@@ -22,11 +22,37 @@ ONEDAY = datetime.timedelta(1)
 ONEWEEK = datetime.timedelta(7)
 
 
+fumbblyears = None
+
+
 def current_weeknr():
   return weeknr(now())
 
+
 def now():
   return datetime.datetime.now(TZ)
+
+
+def regen_fumbblyears():
+  global fumbblyears
+  result = {}
+  TI = srdata.TournamentIdx
+  gen = (
+      row for row in srdata.data["tournaments"]
+      if TI.FIRST_SLOT_GROUP < len(row)
+      and row[TI.FIRST_SLOT_GROUP] == 'FC'
+  )
+  for y, row in enumerate(gen, 2):
+    if y == 2:
+      result[y - 1] = range(0, row[TI.ENTER_WEEKNR] + 1)
+    start_weeknr = row[TI.ENTER_WEEKNR] + 1
+    stop_weeknr = row[TI.EXIT_WEEKNR] + 1
+    result[y] = range(start_weeknr, stop_weeknr)
+  else:
+    result[y] = range(start_weeknr, 999999999)
+  fumbblyears = result
+  return result
+regen_fumbblyears()
 
 
 def report_date(datetimeobj):
@@ -90,6 +116,12 @@ def weeknr_firstdate(weeknr):
 
 def weeknr_firsttime(weeknr):
   return ZEROTIME + weeknr * ONEWEEK
+
+
+def weeknr_fumbblyear(weeknr):
+  for y, r in fumbblyears.items():
+    if weeknr in r:
+      return y
 
 
 def weeknr_lastdate(weeknr):
