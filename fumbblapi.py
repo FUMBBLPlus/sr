@@ -60,6 +60,11 @@ def get__match_get(matchId, *, force_request=False):
   return _get_json_obj(url, force_request)
 
 
+def get__team(teamId, *, force_request=False):
+  url = f'https://{host}/api/team/get/{teamId}'
+  return _get_json_obj(url, force_request)
+
+
 def get__tournament_schedule(
       tournamentId, *, force_request=False
   ):

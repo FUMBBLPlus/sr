@@ -26,3 +26,22 @@ def prevnext_title(tournament):
         result[1] = t
         break
   return result
+
+
+def weeknr_tournaments(weeknr):
+  TI = srdata.TournamentIdx
+  for row in srdata.data["tournaments"]:
+    if row[TI.TOP_ID]:
+      toprow = srdata.data["tournament"][row[TI.TOP_ID]]
+    elif row[TI.TOP_ID] is not None:
+      toprow = row
+    else:
+      continue
+    if len(toprow) <= TI.EXIT_WEEKNR:
+      continue
+    enter_weeknr = toprow[TI.ENTER_WEEKNR]
+    exit_weeknr = toprow[TI.EXIT_WEEKNR]
+    if enter_weeknr is None or exit_weeknr is None:
+      continue
+    if weeknr in range(enter_weeknr, exit_weeknr):
+      yield row

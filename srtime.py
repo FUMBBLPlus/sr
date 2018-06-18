@@ -51,8 +51,6 @@ def regen_fumbblyears():
   else:
     result[y] = range(start_weeknr, 999999999)
   fumbblyears = result
-  return result
-regen_fumbblyears()
 
 
 def report_date(datetimeobj):
