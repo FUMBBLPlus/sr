@@ -1,6 +1,11 @@
+import collections
 import fumbblapi
 import srdata
 import srmatch
+import srschedule
+
+
+PROGRESSION_MULTIPLE = '(MUL)'
 
 
 def calculate(class_, progression, is_winner):
@@ -67,16 +72,3 @@ def get_keyclass(class_):
 
 def is_ugly(progression):
   return bool(set(progression) & set('CFQ'))
-
-
-def total_points_allocated(class_):
-  points = srdata.data["points"]
-  rule = points[class_]
-  initial, _p = [a.strip() for a in rule.split('*')]
-  initial = int(initial)
-  ps = [int(a.strip()) for a in reversed(_p.split('-'))]
-  ps.append(initial)
-  result = ps[0]
-  for i, p in enumerate(ps[1:]):
-    result += p * 2**i
-  return result

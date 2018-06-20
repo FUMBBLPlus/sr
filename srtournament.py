@@ -7,6 +7,38 @@ def format_(old_group_tournaments, tournamentId):
       return t.find('type').text
 
 
+def iter_weeknr_tournaments(weeknr, move=None):
+  TI = srdata.TournamentIdx
+  for row in srdata.data["tournaments"]:
+    if row[TI.TOP_ID]:
+      toprow = srdata.data["tournament"][row[TI.TOP_ID]]
+    elif row[TI.TOP_ID] is not None:
+      toprow = row
+    else:
+      continue
+    if len(toprow) <= TI.EXIT_WEEKNR:
+      continue
+    enter_weeknr = toprow[TI.ENTER_WEEKNR]
+    exit_weeknr = toprow[TI.EXIT_WEEKNR]
+    if enter_weeknr is None or exit_weeknr is None:
+      continue
+    if move is None or move.lower() == 'included':
+      if weeknr in range(enter_weeknr, exit_weeknr):
+        yield row
+    elif move.lower() == 'enter':
+      if weeknr == enter_weeknr:
+        yield row
+    elif move.lower() == 'exit':
+      if weeknr == exit_weeknr:
+        yield row
+    elif move.lower() == 'remaining':
+      if weeknr in range(enter_weeknr + 1, exit_weeknr):
+        yield row
+    elif move.lower() == 'last':
+      if weeknr == exit_weeknr - 1:
+        yield row
+
+
 def prevnext_title(tournament):
   TI = srdata.TournamentIdx
   result = [None, None]
@@ -28,20 +60,6 @@ def prevnext_title(tournament):
   return result
 
 
-def weeknr_tournaments(weeknr):
-  TI = srdata.TournamentIdx
-  for row in srdata.data["tournaments"]:
-    if row[TI.TOP_ID]:
-      toprow = srdata.data["tournament"][row[TI.TOP_ID]]
-    elif row[TI.TOP_ID] is not None:
-      toprow = row
-    else:
-      continue
-    if len(toprow) <= TI.EXIT_WEEKNR:
-      continue
-    enter_weeknr = toprow[TI.ENTER_WEEKNR]
-    exit_weeknr = toprow[TI.EXIT_WEEKNR]
-    if enter_weeknr is None or exit_weeknr is None:
-      continue
-    if weeknr in range(enter_weeknr, exit_weeknr):
-      yield row
+def weeknr_tournaments(weeknr, move=None):
+  # SR Points Calculation (1)
+  return list(iter_weeknr_tournaments(weeknr, move=move))

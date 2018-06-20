@@ -33,6 +33,10 @@ def load(directory_):
       data[_p.stem] = json.load(_f)
   try:
     data['fillerteams'] = set(data['fillerteams'])
+    data['rostername'] = {
+        int(rosterId): li
+        for rosterId, li in data['rostername'].items()
+    }
     data['tournament'] = {
         t[TournamentIdx.ID]: t for t in data['tournaments']
     }

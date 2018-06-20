@@ -21,7 +21,7 @@ def fallback_slot_group(weeknr):
   }
 
 
-def points_included(weeknr):
+def slot_points_included(weeknr):
   return {g: b for g, b in _gen_slot_rule_values(weeknr, 5)}
 
 
