@@ -6,6 +6,9 @@ from . import helper
 # standard modules
 from . import coach
 from . import group
+from . import match
+from . import report
 from . import roster
 from . import team
+from . import time
 from . import tournament

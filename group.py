@@ -16,7 +16,13 @@ class Group(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def apidata_tournament(self):
-    raise NotImplementedError()
+    if self._apidata_tournament is ...:
+      ts = fumbblapi.get__group_tournaments(self.id)
+      self._apidata_tournament = {
+          sr.tournament.Tournament(t["id"]): t
+          for t in ts
+      }
+    return self._apidata_tournament
 
   @property
   def id(self):
@@ -32,3 +38,10 @@ class Group(metaclass=sr.helper.InstanceRepeater):
       }
     return self._oldapidata_tournament
 
+  @property
+  def tournaments(self):
+    return set(self.apidata_tournament)
+
+
+def watched():
+  return {Group(groupId) for groupId in sr.data["groups"]}

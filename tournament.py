@@ -2,33 +2,113 @@ import enum
 import functools
 import json
 import math
-import typing
 
 from . import fumbblapi
 import sr
 
 
-class Schedule(metaclass=sr.helper.InstanceRepeater):
+class Matchup(metaclass=sr.helper.InstanceRepeater):
 
-  Matchup = typing.Dict
-  Matchups = typing.List[Matchup]
+  def __init__(self,
+      tournamentId: int,
+      round_: int,
+      teamIds: frozenset
+  ):
+    pass
+
+  @property
+  def created(self):
+    created = self.schedule.apidata[self]["created"]
+    if created:
+      return sr.time.strptime(created)
+
+  @property
+  def srfinished(self):
+    if not self.is_pending:
+      if self.modified:
+        return self.modified
+      if self.match:
+        return self.match.finished
+
+  @property
+  def is_forfeited(self):
+    return (not self.is_pending and not self.match)
+
+  @property
+  def is_pending(self):
+    return ("result" not in self.schedule.apidata[self])
+
+  @property
+  def match(self):
+    if not self.is_pending:
+      matchId = self.schedule.apidata[self]["result"]["id"]
+      if matchId:
+        return sr.match.Match(matchId)
+        # TODO: set known match properties here
+
+  @property
+  def modified(self):
+    modified = self.schedule.apidata[self]["modified"]
+    if modified:
+      return sr.time.strptime(modified)
+
+  @property
+  def position(self):
+    return self.schedule.apidata[self]["position"]
+
+  @property
+  def round(self):
+    # round value set by metaclass as self._KEY[1]
+    return self._KEY[1]
+
+  @property
+  def schedule(self):
+    # tournamentId set by metaclass as self._KEY[0]
+    return Schedule(self._KEY[0])
+
+  @property
+  def teams(self):
+    # teamtIds set by metaclass as self._KEY[2]
+    return {sr.team.Team(teamId) for teamId in self._KEY[2]}
+
+  @property
+  def tournament(self):
+    # tournamentId set by metaclass as self._KEY[0]
+    return Tournament(self._KEY[0])
+
+
+
+class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   NO_SCHEDULE = '[]'
 
-  def __init__(self, tournamentId):
-    self._tournamentId = int(tournamentId)
+  def __init__(self, tournamentId: int):
     self._apidata = ...
 
   def __repr__(self):
-    return f'Schedule({self._tournamentId})'
+    return f'Schedule({self.tournament.id})'
 
 
   @property
   def apidata(self):
     if self._apidata == ...:
-      self._apidata = fumbblapi.get__tournament_schedule(
-            self._tournamentId
+      li = fumbblapi.get__tournament_schedule(
+          self.tournament.id
       )
+      self._apidata = {}
+      for d0 in li:
+        teams = set()
+        for d1 in d0["teams"]:
+          team = sr.team.Team(d1["id"])
+          if not team.name_is_set:
+            # I have the team name known here so I set it and I
+            # may spare the FUMBBL API request for it later
+            team.name = d1["name"]
+          teams.add(team.id)
+        matchup = Matchup(
+            self.tournament.id, d0["round"], frozenset(teams)
+        )
+        self._apidata[matchup] = d0
     return self._apidata
 
   @property
@@ -38,11 +118,11 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
   @property
   def rounds(self):
     if self.tournament.is_elim:
-      p = max({d["position"] for d in self.apidata})
+      p = max({matchup.position for matchup in self.matchups})
       # p=1 for final; 3 for semi-final; 7 for quaterfinal; etc.
       r = int(math.log(p + 1, 2))
     else:
-      rounds_ = {matchup["round"] for matchup in self.apidata}
+      rounds_ = {matchup.round for matchup in self.matchups}
       r = max(rounds_)
       # Sometimes non-elimination format tournaments' round
       # value is unset by tournament admins and they only
@@ -53,10 +133,21 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
       # Example: Tournament(19144).
       f = True
       while r and 1 < r and f:
-        f = round_forfeited(schedule, r)
+        f = round_is_forfeited(schedule, r)
         if f:
           r -= 1
     return r
+
+  @property
+  def srfinished(self):
+    if not any(matchup.is_pending for matchup in self.matchups):
+      s = {
+          matchup.srfinished
+          for matchup in self.matchups
+          if matchup.srfinished
+      }
+      if s:
+        return max(s)
 
   @property
   def teams(self):
@@ -64,46 +155,41 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def tournament(self):
-    return Tournament(self._tournamentId)
+    # tournamentId set by metaclass as self._KEY[0]
+    return Tournament(self._KEY[0])
 
   @property
-  def matchups(self) -> Matchups:
-    return sorted(
-        self.apidata,
-        key=lambda matchup: (
-            matchup["round"],
-            matchup["position"],
-        )
-    )
+  def matchups(self):
+    return set(self.apidata)
 
-  def round_forfeited(self, round_):
+  def round_is_forfeited(self, round_):
     if all(
-        (matchup.get("result", {}).get("id") == 0)
-        for matchup in self.apidata
-        if matchup["round"] == round_
+        matchup.is_forfeited
+        for matchup in self.matchups
+        if matchup.round == round_
     ):
       return True
     else:
       return False
 
   def round_teams(self, round_):
-    if round_ is not None:
+    if round_ is None:
       teams_ = {
-          sr.team.Team(team["id"])
-          for matchup in self.apidata
-          for team in matchup["teams"]
-          if matchup["round"] == round_
+          team
+          for matchup in self.matchups
+          for team in matchup.teams
       }
     else:
       teams_ = {
-          sr.team.Team(team["id"])
-          for matchup in self.apidata
-          for team in matchup["teams"]
+          team
+          for matchup in self.matchups
+          for team in matchup.teams
+          if matchup.round == round_
       }
     return teams_
 
 
-
+#@functools.total_ordering
 class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   class DataIdx(enum.IntEnum):
@@ -128,20 +214,35 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     self._name = ...
     self._n_srteams = ...
     self._rank = ...
+    self._qualifier_tournaments = set()
     self._teams = ...
     self._title = ...
     self._winner_teamId = ...
+    # self._KEY is normally set by the metaclass after instance
+    # creation but to link main tournaments with qualifiers,
+    # I need that now.
+    self._KEY = (tournamentId,)
+    if self.is_main is False:
+      self.main._qualifier_tournaments.add(self)
+
+  def __lt__(self, other):
+    raise NotImplemtedError()
+
+  def __bool__(self):
+    return bool(self.srname or self.name)
 
   def __repr__(self):
     return f'Tournament({self.id})'
 
   def __str__(self):
-    return self.name or "* Some Tournament *"
+    return self.srname or self.name or "* Some Tournament *"
 
   @property
   def group(self):
-    if self._groupId is ...:
-      self._groupId = self.srdata[self.DataIdx.groupId]
+    if self._groupId is ... and self.srdata:
+      self._groupId = int(self.srdata[self.DataIdx.groupId])
+    # Currently there is no FUMBBL API endpoint to get the group
+    # of an arbitrary tournament.
     if self._groupId is not ...:
       return sr.group.Group(self._groupId)
 
@@ -205,7 +306,9 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def main(self):
-    if self._main_tournamentId is ...:
+    if not self.srdata:
+      return None
+    elif self._main_tournamentId is ...:
       i = self.srdata[self.DataIdx.main_tournamentId]
       # For visual and compactness, the TOURNAMENTS.JSON file
       # has zeros as main tournament IDs for main tournaments.
@@ -213,14 +316,30 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         i = self.id
       self._main_tournamentId = i
     if self._main_tournamentId is not ...:
-      return Tournament(self._main_tournamentId)
+      if self._main_tournamentId == self.id:
+        return self  # avoids recursion
+      else:
+        return Tournament(self._main_tournamentId)
+  @main.setter
+  def main(self, main):
+    if self.is_main is not None:
+      raise AttributeError("main tournament is already set")
+    if hasattr(main, "id"):
+      main_tournamentId = main.id
+    else:
+      main_tournamentId = main
+    self._main_tournamentId = int(main_tournamentId)
+    srdata_idx = self.DataIdx.main_tournamentId
+    if self._main_tournamentId == self.id:
+      self.srdata[srdata_idx] = 0
+    else:
+      self.srdata[srdata_idx] = self._main_tournamentId
+      self.main._qualifier_tournaments.add(self)
 
   @property
   def name(self):
-    if self._name is ...:
-      self._name = self.srdata[self.DataIdx.name]
-    if self._name is not ...:
-      return self._name
+    if self.group:
+      return self.group.apidata_tournament[self]["name"]
 
   @property
   def n_srteams(self):
@@ -229,6 +348,10 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     if self._n_srteams is ...:
       self._n_srteams = self.schedule.n_srteams
     return self._n_srteams
+
+  @property
+  def qualifier_tournaments(self):
+    return self._qualifier_tournaments
 
   @property
   def rank(self):
@@ -269,12 +392,48 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srdata(self):
-    li = sr.data["tournament"].get(self.id, [...] * 10)
-    return tuple(li)
+    srdata_row = sr.data["tournament"].get(self.id)
+    if srdata_row:
+      return tuple(srdata_row)
+
+  @property
+  def srname(self):
+    if self.srdata:
+      return self.srdata[self.DataIdx.name]
+
+  @property
+  def status(self):
+    if self.group:
+      return self.group.apidata_tournament[self]["status"]
+
+  @property
+  def winner(self):
+    if self.group:
+      w = self.group.apidata_tournament[self].get("winner")
+      if w:
+        team = sr.team.Team(w["id"])
+        if not team.name_is_set:
+          # I have the team name known here so I set it and I
+          # may spare the FUMBBL API request for it later
+          team.name = w["name"]
+      return team
 
 
-def tournaments():
+
+def added():
   return {
       Tournament(tournamentId)
       for tournamentId in sr.data["tournament"]
+  }
+
+
+def new():
+  return watched() - added()
+
+
+def watched():
+  return {
+      tournament
+      for group in sr.group.watched()
+      for tournament in group.tournaments
   }

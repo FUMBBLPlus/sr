@@ -10,6 +10,7 @@ class Team(metaclass=sr.helper.InstanceRepeater):
 
   def __init__(self, teamId: int):
     self._apidata = ...
+    self._name = ...
 
   def __bool__(self):
     if self.is_filler:
@@ -54,11 +55,19 @@ class Team(metaclass=sr.helper.InstanceRepeater):
     return self._KEY[0]  # set by metaclass
 
   @property
+  def name_is_set(self):
+    return (self.is_filler or self._name != ...)
+
+  @property
   def name(self):
     if self.is_filler:
       return "filler"
-    elif self.apidata:
-      return self.apidata["name"]
+    elif self._name == ...:
+      self._name = self.apidata.get("name")
+    return self._name
+  @name.setter
+  def name(self, name: str):
+    self._name = str(name)
 
   @property
   def roster(self):
