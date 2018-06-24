@@ -50,6 +50,11 @@ def deriv_get__group_tournament(groupId, tournamentId, *,
       return tournament_data
 
 
+def get__coach(coachId, *, force_request=False):
+  url = f'https://{host}/api/coach/get/{coachId}'
+  return _get_json_obj(url, force_request)
+
+
 def get__group_tournaments(groupId, *, force_request=False):
   url = f'https://{host}/api/group/tournaments/{groupId}'
   return _get_json_obj(url, force_request)
@@ -57,6 +62,11 @@ def get__group_tournaments(groupId, *, force_request=False):
 
 def get__match_get(matchId, *, force_request=False):
   url = f'https://{host}/api/match/get/{matchId}'
+  return _get_json_obj(url, force_request)
+
+
+def get__roster(rosterId, *, force_request=False):
+  url = f'https://{host}/api/roster/get/{rosterId}'
   return _get_json_obj(url, force_request)
 
 
