@@ -22,6 +22,8 @@ class Group(metaclass=sr.helper.InstanceRepeater):
           sr.tournament.Tournament(t["id"]): t
           for t in ts
       }
+      # The purpose of next line is explained in the method.
+      self.set_for_tournaments(self._apidata_tournament)
     return self._apidata_tournament
 
   @property
@@ -36,12 +38,22 @@ class Group(metaclass=sr.helper.InstanceRepeater):
           sr.tournament.Tournament(int(t.attrib["id"])): t
           for t in ts.iter("tournament")
       }
+      # The purpose of next line is explained in the method.
+      self.set_for_tournaments(self._oldapidata_tournament)
     return self._oldapidata_tournament
 
   @property
   def tournaments(self):
-    return set(self.apidata_tournament)
+    tournaments_ = set(self.apidata_tournament)
+    self.set_for_tournaments(tournaments_)  # explained below
+    return tournaments_
 
+  def set_for_tournaments(self, tournaments_):
+    # As there is no way to get the group of an arbitrary
+    # tournament from FUMBBL I catch every posiibility to set
+    # the group of a tournament if its known.
+    for tournament in tournaments_:
+      tournament.group = self
 
 def watched():
   return {Group(groupId) for groupId in sr.data["groups"]}

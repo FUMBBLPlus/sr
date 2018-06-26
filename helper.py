@@ -15,14 +15,21 @@ class InstanceRepeater(type):
     return type.__new__(meta, name, bases, dict_)
 
   def __call__(cls, *args):
-    key = tuple(args)
-    # cls.__instances would
-    dict_ = cls._instances
-    if key in dict_:
-      obj = dict_[key]
+    if hasattr(cls, "_get_key"):
+      key = cls._get_key(*args)
     else:
-      obj = type.__call__(cls, *args)
-      obj._KEY = key
-      hash(obj)  # this raises TypeError if mutable key
-      dict_[key] = obj
-    return obj
+      key = tuple(args)
+    if key in cls._instances:
+      instance = cls._instances[key]
+    else:
+      instance = type.__call__(cls, *args)
+      instance._KEY = key
+      hash(instance)  # this raises TypeError if key is mutable
+      cls._instances[key] = instance
+    return instance
+
+
+class NoInstances:
+
+  def __new__(cls, *args, **kwargs):
+    raise TypeError("class may not be instantiated")
