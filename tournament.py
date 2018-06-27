@@ -117,12 +117,12 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
     return self._apidata
 
   @property
-  def n_srteams(self):
+  def srnteams(self):
     return len({team for team in self.round_teams(1) if team})
 
   @property
   def rounds(self):
-    if self.tournament.is_elim:
+    if self.tournament.iselim:
       p = max({matchup.position for matchup in self.matchups})
       # p=1 for final; 3 for semi-final; 7 for quaterfinal; etc.
       return int(math.log(p + 1, 2))
@@ -147,14 +147,13 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
             for matchup in self.matchups
             if matchup.round == round_ and matchup.srfinished
         }
-        print(finished)
         if finished:
           return max(finished)
 
   @property
   def srrounds(self):
     r = self.rounds
-    if not self.tournament.is_elim:
+    if not self.tournament.iselim:
       # Sometimes non-elimination format tournaments' round
       # value is unset by tournament admins and they only
       # realize that when another round gets drawn after the
@@ -218,41 +217,61 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 #@functools.total_ordering
 class Tournament(metaclass=sr.helper.InstanceRepeater):
 
+  def _main_only(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+      if not self.ismain:
+        raise AttributeError('only for main tournaments')
+      else:
+        return method(self, *args, **kwargs)
+    return wrapper
+
   class SRClass(sr.helper.NoInstances):
-    FORMAT_CHARS = ("N", "E")
-    # FORMAT_CHARS order is important for is_elim()
-    RANKS = ("MA", "MI", "QU")
+    NONE = "?"
+    NON_ELIM = "N"
+    ELIM = "E"
+    FORMAT_CHARS = (NON_ELIM, ELIM)
+    # FORMAT_CHARS order is important for iselim()
+    MAJOR = "MA"
+    MINOR = "MI"
+    QUALIFIER = "QU"
+    RANKS = (MAJOR, MINOR, QUALIFIER)
 
     class Idx(enum.IntEnum):
-      format_char = 0
+      srformatchar = 0
       rank = 1
       level = 2
-      n_srteams = 3
+      srnteams = 3
     UPPER_INDICES = frozenset((0, 1))
     INT_INDICES = frozenset((2, 3))
 
     @classmethod
-    def format_char(cls, srclassval):
-      return cls.split(srclassval)[cls.Idx.format_char]
+    def srformatchar(cls, srclassval):
+      return cls.split(srclassval)[cls.Idx.srformatchar]
 
     @classmethod
     def getval(cls, *args):
       values = list(args)
-      if values[0] in (False, True):  # is_elim_is accepted
+      if values[0] in (False, True):  # iselim_is accepted
         values[0] = cls.FORMAT_CHARS[values[0]]
-      is_elim = cls.FORMAT_CHARS.index(values[0].upper())
-      N = (4 if is_elim else 3)
+      iselim = cls.FORMAT_CHARS.index(values[0].upper())
+      N = (4 if iselim else 3)
       values = values[:N]
       for i, v in enumerate(values):
+        if v in (None, ...):
+          continue
         if i in cls.UPPER_INDICES:
           values[i] = v.upper()
         elif i in cls.INT_INDICES:
           values[i] = int(v)  # raises TypeError if not integer
-      return "/".join([str(v) for v in values])
+      return "/".join([
+          (str(v) if v not in (None, ...) else cls.NONE)
+          for v in values
+      ])
 
     @classmethod
-    def is_elim(cls, srclassval):
-      v = cls.format_char(srclassval)
+    def iselim(cls, srclassval):
+      v = cls.srformatchar(srclassval)
       return bool(cls.FORMAT_CHARS.index(v))
 
     @classmethod
@@ -260,10 +279,10 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return cls.split(srclassval)[cls.Idx.level]
 
     @classmethod
-    def n_srteams(cls, srclassval):
+    def srnteams(cls, srclassval):
       splitted = cls.split(srclassval)
-      if cls.Idx.n_srteams < len(splitted):
-        return splitted[cls.Idx.n_srteams]
+      if cls.Idx.srnteams < len(splitted):
+        return splitted[cls.Idx.srnteams]
 
     @classmethod
     def rank(cls, srclassval):
@@ -282,47 +301,36 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   class SRData(sr.helper.NoInstances):
     class Idx(enum.IntEnum):
       groupId = 0
-      main_tournamentId = 1
+      maintournamentId = 1
       srname = 2
       srclass = 3
-      winner_teamId = 4
-      srtitle = 5
+      srtitle = 4
       # srtitle is defined for special tournaments listed in the
       # first section of the rulebook.
-      srslot = 6  # first slot group
-      enter_weeknr = 7
-      exit_weeknr = 8
+      srfsgname = 5  # first slot group name
+      srenterweeknr = 6
+      srexitweeknr = 7
 
   def __init__(self, tournamentId: int):
     # ... is for unset
     self._groupId = ...
     self._maintournamentId = ...
-    self._qualifier_tournaments = set()
+    self._qualifiers = set()
     self._srname = ...
-    self._is_elim = ...
+    self._iselim = ...
     self._rank = ...
     self._level = ...
-    self._n_srteams = ...
-
-    #self._baseslot = ...
-    #self._enter_weeknr = ...
-    #self._exit_weeknr = ...
-
-
-    #len_srdata = len(self.SRData.Idx.__members__)
-    #self._srdata_inputs = [None] * len_srdata
-    #self._teams = ...
-    #self._title = ...
-    #self._winner_teamId = ...
+    self._srnteams = ...
+    self._srtitle = ...
+    self._srfsg = ...
+    self._srenterweeknr = ...
+    self._srexitweeknr = ...
     # self._KEY is normally set by the metaclass after instance
     # creation but I need that now to be able to link main
     # tournaments with their qualifiers.
     self._KEY = (tournamentId,)
-    if self.is_main is False:
-      self.main._qualifier_tournaments.add(self)
-
-  def __lt__(self, other):
-    raise NotImplemtedError()
+    if self.ismain is False:
+      self.main._qualifiers.add(self)
 
   def __bool__(self):
     return bool(self.srname or self.name)
@@ -332,17 +340,6 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   def __str__(self):
     return self.srname or self.name or "* Some Tournament *"
-
-  @property
-  def format_char(self):
-    return self._get_class(self.SRClassIdx.format_char)
-  @format_char.setter
-  def format_char(self, format_char: str):
-    format_char = format_char.upper()
-    if format_char not in self.SRCLASS_FORMAT_CHARS:
-      raise ValueError(f'invalid value: {format_char}')
-
-
 
   @property
   def group(self):
@@ -363,6 +360,14 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       self._groupId = int(group)
 
   @property
+  def groupId(self):
+    if self.group:
+      return self.group.id
+  @groupId.setter
+  def groupId(self, groupId):
+    self.group = groupId
+
+  @property
   def http(self):
     return (
         "https://fumbbl.com/p/group"
@@ -378,11 +383,11 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return self._KEY[0]  # set by metaclass
 
   @property
-  def is_elim(self):
-    if self._is_elim is ...:
+  def iselim(self):
+    if self._iselim is ...:
       if self.srdata:
         srclassval = self.srdata[self.SRData.Idx.srclass]
-        self._is_elim = self.SRClass.is_elim(srclassval)
+        self._iselim = self.SRClass.iselim(srclassval)
       else:
         t = self.group.oldapidata_tournament[self]
         tournament_format = t.find("type").text
@@ -392,15 +397,18 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
             "RoundRobin": False,
             "Swiss": False,
         }
-        self._is_elim = d[tournament_format]
-    if self._is_elim is not ...:
-      return self._is_elim
-  @is_elim.setter
-  def is_elim(self, is_elim: bool):
-    self._is_elim = bool(is_elim)
+        self._iselim = d[tournament_format]
+    if self._iselim not in (..., self.SRClass.NONE):
+      return self._iselim
+  @iselim.setter
+  def iselim(self, iselim: bool):
+    if iselim not in (None, ...):
+      self._iselim = bool(iselim)
+    else:
+      self._iselim = iselim
 
   @property
-  def is_main(self):
+  def ismain(self):
     if self.main is self:
       return True
     elif self.main:
@@ -412,24 +420,25 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       if self.srdata:
         srclassval = self.srdata[self.SRData.Idx.srclass]
         self._level = self.SRClass.level(srclassval)
-    if self._level is not ...:
+    if self._level not in (..., self.SRClass.NONE):
       return self._level
   @level.setter
   def level(self, level: int):
-    exc = ValueError(f'invalid level: {level}')
-    try:
-      level = int(level)
-    except ValueError:
-      raise exc
-    if level <= 0:
-      raise exc
+    if level not in (None, ...):
+      exc = ValueError(f'invalid level: {level}')
+      try:
+        level = int(level)
+      except ValueError:
+        raise exc
+      if level <= 0:
+        raise exc
     self._level = level
 
   @property
   def main(self):
     if self._maintournamentId is ...:
       if self.srdata:
-        srdataidx = self.SRData.Idx.main_tournamentId
+        srdataidx = self.SRData.Idx.maintournamentId
         self._maintournamentId = self.srdata[srdataidx]
     if self._maintournamentId in {0, self.id}:
       # For visual and compactness, the TOURNAMENTS.JSON file
@@ -449,9 +458,19 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     if self._maintournamentId == self.id:
       self._maintournamentId = 0  # explained in the getter
     elif previous_main and previous_main is not self:
-        previous_main._qualifier_tournaments.remove(self)
-    if self.is_main is False:
-      self.main._qualifier_tournaments.add(self)
+        previous_main._qualifiers.remove(self)
+    if self.ismain is False:
+      self.main._qualifiers.add(self)
+
+  @property
+  def maintournamentId(self):
+    if self.ismain:
+      return 0  # explained in self.main getter
+    elif self.main:
+      return self.main.id
+  @maintournamentId.setter
+  def maintournamentId(self, maintournamentId):
+    self.main = maintournamentId
 
   @property
   def name(self):
@@ -459,27 +478,99 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return self.group.apidata_tournament[self]["name"]
 
   @property
-  def n_srteams(self):
-    if self._n_srteams is ...:
-      if self.srdata:
-        srclassval = self.srdata[self.SRData.Idx.srclass]
-        self._n_srteams = self.SRClass.n_srteams(srclassval)
-    if self._n_srteams is not ...:
-      return self._n_srteams
-  @n_srteams.setter
-  def n_srteams(self, n_srteams: int):
-    exc = ValueError(f'invalid n_srteams: {n_srteams}')
-    try:
-      n_srteams = int(n_srteams)
-    except ValueError:
-      raise exc
-    if n_srteams <= 0:
-      raise exc
-    self._n_srteams = n_srteams
+  def newsrdata(self):
+    attrs = tuple(self.SRData.Idx.__members__)
+    if not self.ismain:
+      attrs = attrs[:self.SRData.Idx.srtitle - len(attrs)]
+    return tuple(getattr(self, a) for a in attrs)
 
   @property
-  def qualifier_tournaments(self):
-    return self._qualifier_tournaments
+  @_main_only
+  def srenterweeknr(self):
+    if self._srenterweeknr is ...:
+      if self.srdata:
+        srdataidx = self.SRData.Idx.srenterweeknr
+        self._srenterweeknr = self.srdata[srdataidx]
+    if self._srenterweeknr in (None, ...):
+      srfinished = self.schedule.srfinished
+      if srfinished:
+        self._srenterweeknr = sr.time.weeknr(srfinished) + 1
+        # Tournament enters the system the next week it
+        # finishes, hence the plus one.
+    if self._srenterweeknr is not ...:
+      return self._srenterweeknr
+  @srenterweeknr.setter
+  @_main_only
+  def srenterweeknr(self, srenterweeknr: int):
+    if srenterweeknr not in (None, ...):
+      srenterweeknr = int(srenterweeknr)
+    self._srenterweeknr = srenterweeknr
+
+  @property
+  @_main_only
+  def srexitweeknr(self):
+    if self._srexitweeknr is ...:
+      if self.srdata:
+        srdataidx = self.SRData.Idx.srexitweeknr
+        self._srexitweeknr = self.srdata[srdataidx]
+    if self._srexitweeknr in (None, ...):
+      srenterweeknr = self.srenterweeknr
+      if srenterweeknr is not None:
+        srtitle = self.srtitle
+        settings = sr.data["settings"]
+        if not srtitle:
+          remains = settings["tournament.normal.ramains"]
+          self._srexitweeknr = srenterweeknr + remains
+        else:
+          remains = settings["tournament.srtitle.ramains"]
+          prev, next_ = self.srsametitleprevnext
+          if next_:
+            next_srenterweeknr = next_.srenterweeknr
+            if next_srenterweeknr:
+              self._srexitweeknr = min(
+                  next_srenterweeknr, srenterweeknr + remains
+              )
+    if self._srexitweeknr is not ...:
+      return self._srexitweeknr
+  @srexitweeknr.setter
+  @_main_only
+  def srexitweeknr(self, srexitweeknr: int):
+    if srexitweeknr not in (None, ...):
+      srexitweeknr = int(srexitweeknr)
+    self._srexitweeknr = srexitweeknr
+
+  @property
+  def srformatchar(self):
+    return self._get_class(self.SRClassIdx.srformatchar)
+  @srformatchar.setter
+  def srformatchar(self, srformatchar: str):
+    srformatchar = srformatchar.upper()
+    if srformatchar not in self.SRCLASS_FORMAT_CHARS:
+      raise ValueError(f'invalid value: {srformatchar}')
+
+  @property
+  def srnteams(self):
+    if self._srnteams is ...:
+      if self.srdata:
+        srclassval = self.srdata[self.SRData.Idx.srclass]
+        self._srnteams = self.SRClass.srnteams(srclassval)
+    if self._srnteams not in (..., self.SRClass.NONE):
+      return self._srnteams
+  @srnteams.setter
+  def srnteams(self, srnteams: int):
+    if srnteams not in (None, ...):
+      exc = ValueError(f'invalid srnteams: {srnteams}')
+      try:
+        srnteams = int(srnteams)
+      except ValueError:
+        raise exc
+      if srnteams <= 0:
+        raise exc
+    self._srnteams = srnteams
+
+  @property
+  def qualifiers(self):
+    return self._qualifiers
 
   @property
   def rank(self):
@@ -487,13 +578,14 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       if self.srdata:
         srclassval = self.srdata[self.SRData.Idx.srclass]
         self._rank = self.SRClass.rank(srclassval)
-    if self._rank is not ...:
+    if self._rank not in (..., self.SRClass.NONE):
       return self._rank
   @rank.setter
   def rank(self, rank: str):
-    rank = rank.upper()
-    if rank not in self.SRClass.RANKS:
-      raise ValueError(f'invalid rank: {rank}')
+    if rank not in (None, ...):
+      rank = rank.upper()
+      if rank not in self.SRClass.RANKS:
+        raise ValueError(f'invalid rank: {rank}')
     self._rank = rank
 
   @property
@@ -503,23 +595,8 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   def srclass(self):
     return self.SRClass.getval(
-        self.is_elim, self.rank, self.level, self.n_srteams
+        self.iselim, self.rank, self.level, self.srnteams
     )
-  @srclass.setter
-  def srclass(self, class_):
-    if class_ not in (None, ...):
-      class_parts = class_.upper().split("/")
-      if len(class_parts) == 3:
-        elim, rank, level = class_parts
-        n_srteams = ...
-      elif len(class_parts) == 4:
-        elim, rank, level, n_srteams = class_parts
-        n_srteams = int(n_srteams)
-      self.is_elim = (elim == "E")
-      self.rank = rank
-      self.level = level
-      if self._n_srteams is ...:
-        self._n_srteams = n_srteams
 
   @property
   def srdata(self):
@@ -528,15 +605,89 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return tuple(srdata_row)
 
   @property
+  @_main_only
+  def srfsg(self):
+    if self._srfsg is ...:
+      if self.srdata:
+        srdataidx = self.SRData.Idx.srfsgname
+        self._srfsg = sr.slot.SlotGroup(self.srdata[srdataidx])
+    if self._srfsg is not ...:
+      return self._srfsg
+  @srfsg.setter
+  @_main_only
+  def srfsg(self, slot):
+    if hasattr(slot, "coachslots"):
+      self._srfsg = slot
+    else:
+      self._srfsg = sr.slot.SlotGroup(str(slot).upper())
+
+  @property
+  @_main_only
+  def srfsgname(self):
+    return self.srfsg.name
+  @srfsgname.setter
+  @_main_only
+  def srfsgname(self, name: str):
+    self.srfsg = name
+
+  @property
   def srname(self):
     if self._srname is ...:
       if self.srdata:
-        self._srname = self.srdata[self.SRData.Idx.srname]
+        srdataidx = self.SRData.Idx.srname
+        self._srname = self.srdata[srdataidx]
     if self._srname is not ...:
       return self._srname
   @srname.setter
   def srname(self, name: str):
     self._srname = str(name)
+
+  @property
+  @_main_only
+  def srtitle(self):
+    if self._srtitle is ...:
+      if self.srdata:
+        srdataidx = self.SRData.Idx.srtitle
+        self._srtitle = self.srdata[srdataidx]
+    if self._srtitle is not ...:
+      return self._srtitle
+  @srtitle.setter
+  @_main_only
+  def srtitle(self, title: str):
+    self._srtitle = str(title)
+
+  @property
+  @_main_only
+  def itersamesrtitles(self):
+    srtitle = self.srtitle
+    if not srtitle:
+      raise AttributeError("special main tournaments only")
+    for tournament in (added() | new()):
+      if tournament.ismain:
+        if tournament.srtitle == srtitle:
+          yield tournament
+
+  @property
+  @_main_only
+  def srsametitleprevnext(self):
+    result = [None] * 2
+    for tournament in sorted(
+        {
+            tournament for tournament in self.itersamesrtitles
+            if tournament is not self
+            and tournament.status == "completed"
+        },
+        key=lambda tournament: (
+            tournament.srenterweeknr,
+            tournament.id
+        )
+    ):
+      if tournament.srenterweeknr < self.srenterweeknr:
+        result[0] = tournament
+      elif self.srenterweeknr < tournament.srenterweeknr:
+        result[1] = tournament
+        break
+    return tuple(result)
 
   @property
   def status(self):
@@ -549,12 +700,12 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     if self.group:
       w = self.group.apidata_tournament[self].get("winner")
       if w:
-        team = sr.team.Team(w["id"])
+        team = sr.team.Team(int(w["id"]))
         if not team.name_is_set:
           # I have the team name known here so I set it and I
           # may spare the FUMBBL API request for it later
           team.name = w["name"]
-      return team
+        return team
 
 
 

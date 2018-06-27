@@ -9,6 +9,7 @@ from . import group
 from . import match
 from . import report
 from . import roster
+from . import slot
 from . import team
 from . import time
 from . import tournament
