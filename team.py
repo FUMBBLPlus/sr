@@ -26,7 +26,7 @@ class Team(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def apidata(self):
-    if self._apidata == ...:
+    if self._apidata is ...:
       self._apidata = fumbblapi.get__team(self.id)
       if self._apidata == json.loads(self.NO_TEAM):
         self._apidata = None
@@ -56,13 +56,13 @@ class Team(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def name_is_set(self):
-    return (self.is_filler or self._name != ...)
+    return (self.is_filler or self._name is not ...)
 
   @property
   def name(self):
     if self.is_filler:
       return "filler"
-    elif self._name == ...:
+    elif self._name is ...:
       self._name = self.apidata.get("name")
     return self._name
   @name.setter

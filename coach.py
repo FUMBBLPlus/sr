@@ -44,11 +44,11 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def name_is_set(self):
-    return (self._name != ...)
+    return (self._name is not ...)
 
   @property
   def name(self):
-    if self._name == ...:
+    if self._name is ...:
       try:
         self._name = fumbblapi.get__coach(self.id).get("name")
       except json.JSONDecodeError:

@@ -41,7 +41,7 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def apidata(self):
-    if self._apidata == ...:
+    if self._apidata is ...:
       self._apidata = fumbblapi.get__roster(self.id)
       if self._apidata == json.loads(self.NO_ROSTER):
         self._apidata = None
@@ -53,7 +53,7 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def name(self):
-    if self._name == ...:
+    if self._name is ...:
       self._name = self.name_of_week()
       if not self._name:
         self._name = self.apidata.get("name")
@@ -64,7 +64,7 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def name_is_set(self):
-    return (self._name != ...)
+    return (self._name is not ...)
 
   def name_of_week(self, weeknr=None):
     names = sr.data["rostername"].get(self.id)

@@ -3,8 +3,13 @@ import pathlib
 
 data = {}
 
-INTKEYS = "fixed_api_schedule", "rostername", "tournament"
-SETS = "fillerteams", "groups"
+INTKEYS = (
+    "fixed_api_schedule",
+    "group",
+    "rostername",
+    "tournament",
+)
+SETS = "fillerteams", "groups_watched"
 
 
 def datadir():
