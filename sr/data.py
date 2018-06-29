@@ -1,6 +1,8 @@
 import json
 import pathlib
 
+import sr
+
 data = {}
 
 INTKEYS = (
@@ -11,9 +13,9 @@ INTKEYS = (
 )
 SETS = "fillerteams", "groups_watched"
 
+curr_path = pathlib.Path(__file__).parent
 
 def datadir():
-  curr_path = pathlib.Path(__file__).parent
   with (curr_path / "settings.json").open() as f:
     settings = json.load(f)
   return curr_path / settings["sr-data.path"]
@@ -28,7 +30,13 @@ def reload(name=None):
   for k in keys:
     del data[k]
   # get sr-data path
-  datadir_ = datadir()
+  srdatadir = sr.settings["sr-data.path"]
+  if srdatadir:
+    srdatadir = pathlib.Path(srdatadir)
+  else:
+    return
+  if not srdatadir.isdir():
+    return
   # filter objects
   if name:
     filegen = [datadir_ / f'{name}.json']

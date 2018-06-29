@@ -1,6 +1,8 @@
 __version__ = "0.1.0"
 
 # prioriy modules
+from . import settings as _settings
+settings = _settings.settings
 from . import data as _data
 data = _data.data
 from . import helper
