@@ -5,8 +5,8 @@ import pathlib
 class Settings:
 
   files = (
-      pathlib.Path.home() / ".fumbblplus/settings.json",
-      pathlib.Path(__file__).parent / "settings.default.json"
+      pathlib.Path.home() / ".fumbblplus/srsettings.json",
+      pathlib.Path(__file__).parent / "srsettings.default.json"
   )
 
   def __init__(self):
