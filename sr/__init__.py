@@ -1,3 +1,5 @@
+__version__ = "0.1.0"
+
 # prioriy modules
 from . import data as _data
 data = _data.data
