@@ -1,4 +1,6 @@
 {
-	"sr-data.path": null,
-	"sr-pages.path": null
+	"sr.sr-data.path": null,
+	"sr.sr-pages.path": null,
+	"sr.tournament.normal.remains": 52,
+	"sr.tournament.srtitle.remains": 78
 }

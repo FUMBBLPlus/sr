@@ -35,13 +35,13 @@ def reload(name=None):
     srdatadir = pathlib.Path(srdatadir)
   else:
     return
-  if not srdatadir.isdir():
+  if not srdatadir.is_dir():
     return
   # filter objects
   if name:
-    filegen = [datadir_ / f'{name}.json']
+    filegen = [srdatadir / f'{name}.json']
   else:
-    filegen = datadir_.glob('*.json')
+    filegen = srdatadir.glob('*.json')
   # read objects
   for p in filegen:
     with p.open() as f:

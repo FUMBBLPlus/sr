@@ -55,5 +55,6 @@ setup(
   extras_require = {
   },
   scripts = [
+      "scripts/set_srdatadir.py",
   ],
   )

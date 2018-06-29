@@ -542,12 +542,11 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       srenterweeknr = self.srenterweeknr
       if srenterweeknr is not None:
         srtitle = self.srtitle
-        settings = sr.data["settings"]
         if not srtitle:
-          remains = settings["tournament.normal.remains"]
+          remains = sr.settings["tournament.normal.remains"]
           self._srexitweeknr = srenterweeknr + remains
         else:
-          remains = settings["tournament.srtitle.remains"]
+          remains = sr.settings["tournament.srtitle.remains"]
           prev, next_ = self.srsametitleprevnext
           if next_:
             next_srenterweeknr = next_.srenterweeknr
@@ -628,11 +627,10 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       srenterweeknr = self.srenterweeknr
       if srenterweeknr is not None:
         srtitle = self.srtitle
-        settings = sr.data["settings"]
         if not srtitle:
-          remains = settings["tournament.normal.remains"]
+          remains = sr.settings["tournament.normal.remains"]
         else:
-          remains = settings["tournament.srtitle.remains"]
+          remains = sr.settings["tournament.srtitle.remains"]
         return srenterweeknr + remains
 
     if self._srexitweeknr in (None, ...) and self.srdata:
@@ -642,12 +640,11 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       srenterweeknr = self.srenterweeknr
       if srenterweeknr is not None:
         srtitle = self.srtitle
-        settings = sr.data["settings"]
         if not srtitle:
-          remains = settings["tournament.normal.remains"]
+          remains = sr.settings["tournament.normal.remains"]
           self._srexitweeknr = srenterweeknr + remains
         else:
-          remains = settings["tournament.srtitle.remains"]
+          remains = sr.settings["tournament.srtitle.remains"]
           prev, next_ = self.srsametitleprevnext
           if next_:
             next_srenterweeknr = next_.srenterweeknr
