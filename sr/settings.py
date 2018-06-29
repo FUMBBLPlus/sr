@@ -11,7 +11,7 @@ class Settings:
 
   def __init__(self):
     self._settings = {p: dict() for p in self.files}
-    for p in self.filenames:
+    for p in self.files:
       if p.isfile():
         with p.open(encoding="utf8") as f:
           self._settings[p] = json.load(f)

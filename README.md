@@ -18,3 +18,11 @@ Installation
 ```bash
 $ pip install git+git://github.com/FUMBBLPlus/sr.git@master
 ```
+
+
+Upgrade
+-------
+
+```bash
+$ pip install git+git://github.com/FUMBBLPlus/sr.git@master --upgrade
+```
