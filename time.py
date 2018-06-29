@@ -67,7 +67,7 @@ def weeknr(datetimeobj):
 
 
 def weeknr_firstdate(weeknr):
-  dt = weeknr_turntime(weeknr)
+  dt = weeknr_firsttime(weeknr)
   return datetime.date(dt.year, dt.month, dt.day)
 
 

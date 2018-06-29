@@ -9,7 +9,7 @@ class Group(metaclass=sr.helper.InstanceRepeater):
   class SRData(sr.helper.NoInstances):
     class Idx(enum.IntEnum):
       default_tournament_ismain = 0
-      default_tournament_rank = 1
+      default_tournament_srrank = 1
       default_tournament_level = 2
       default_tournament_srtitle = 3
       default_tournament_srfsg = 4
@@ -19,7 +19,7 @@ class Group(metaclass=sr.helper.InstanceRepeater):
     self._oldapidata_tournament = ...
     self._name = ...
     self._default_tournament_ismain = ...
-    self._default_tournament_rank = ...
+    self._default_tournament_srrank = ...
     self._default_tournament_level = ...
     self._default_tournament_srtitle = ...
     self._default_tournament_srfsg = ...
@@ -57,10 +57,10 @@ class Group(metaclass=sr.helper.InstanceRepeater):
         return self.srdata[srdataidx]
 
   @property
-  def default_tournament_rank(self):
-    if self._default_tournament_rank is ...:
+  def default_tournament_srrank(self):
+    if self._default_tournament_srrank is ...:
       if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_rank
+        srdataidx = self.SRData.Idx .default_tournament_srrank
         return self.srdata[srdataidx]
 
   @property
