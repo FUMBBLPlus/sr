@@ -48,7 +48,8 @@ setup(
   package_dir = {
       "sr": "./sr",
   },
-  # include_package_data = True,
+  include_package_data = True,
+  package_data={'': ['sr/*.json']},
   install_requires = [
       "pytz",
   ],
