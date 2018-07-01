@@ -570,8 +570,10 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srformatchar(self):
-    if self.iselim:
+    if self.iselim is not None:
       return self.SRClass.FORMAT_CHARS[self.iselim]
+    else:
+      return self.SRClass.NONE
   @srformatchar.setter
   def srformatchar(self, srformatchar: str):
     if srformatchar in (None, self.SRClass.NONE):
@@ -599,7 +601,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @srfsg.setter
   @_main_only
   def srfsg(self, slot):
-    if hasattr(slot, "coachslots"):
+    if slot is None or hasattr(slot, "coachslots"):
       self._srfsg = slot
     else:
       self._srfsg = sr.slot.SlotGroup(str(slot).upper())
@@ -829,7 +831,7 @@ def savesrdata():
 
 
 def srtitles():
-  return {t.srtitle for t in added() if t.srtitle}
+  return {t.srtitle for t in added() if t.ismain and t.srtitle}
 
 
 def watched():

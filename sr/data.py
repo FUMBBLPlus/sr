@@ -15,10 +15,12 @@ SETS = "fillerteams", "groups_watched"
 
 curr_path = pathlib.Path(__file__).parent
 
-def datadir():
-  with (curr_path / "settings.json").open() as f:
-    settings = json.load(f)
-  return curr_path / settings["sr-data.path"]
+def srdatadir():
+  srdatadir = sr.settings["sr-data.path"]
+  if srdatadir:
+    p = pathlib.Path(srdatadir)
+    if p.is_dir():
+      return p
 
 def reload(name=None):
   if name is not None:
@@ -30,18 +32,14 @@ def reload(name=None):
   for k in keys:
     del data[k]
   # get sr-data path
-  srdatadir = sr.settings["sr-data.path"]
-  if srdatadir:
-    srdatadir = pathlib.Path(srdatadir)
-  else:
-    return
-  if not srdatadir.is_dir():
-    return
+  srdatadir_ = srdatadir()
+  if not srdatadir_:
+    return False
   # filter objects
   if name:
-    filegen = [srdatadir / f'{name}.json']
+    filegen = [srdatadir_ / f'{name}.json']
   else:
-    filegen = srdatadir.glob('*.json')
+    filegen = srdatadir_.glob('*.json')
   # read objects
   for p in filegen:
     with p.open() as f:
@@ -52,14 +50,19 @@ def reload(name=None):
     elif name in SETS:
       o = set(o)
     data[name] = o
+  return True
 reload()
 
 
 def save(name):
   name = name.lower()
   s = _dumpfunc[name](name)
-  with (datadir() / f'{name}.json').open("w") as f:
+  srdatadir_ = srdatadir()
+  if not srdatadir_:
+    return False
+  with (srdatadir_ / f'{name}.json').open("w") as f:
     f.write(s)
+  return True
 
 
 def dumps_intkey_one_val_per_row(name):

@@ -56,5 +56,6 @@ setup(
   },
   scripts = [
       "scripts/set_srdatadir.py",
+      "scripts/update_tournaments.py",
   ],
   )

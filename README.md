@@ -19,6 +19,10 @@ Installation
 $ pip install git+git://github.com/FUMBBLPlus/sr.git@master
 ```
 
+```bash
+$ set_srdatadir.py "/path/to/sr-data"
+```
+
 
 Upgrade
 -------
