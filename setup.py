@@ -49,7 +49,13 @@ setup(
       "sr": "./sr",
   },
   include_package_data = True,
-  package_data={'': ['sr/*.json']},
+  package_data={
+      "": [
+          "sr/*.json",
+          "LICENSE.txt",
+          "README.md"
+      ],
+  },
   install_requires = [
       "pytz",
   ],
