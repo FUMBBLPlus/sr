@@ -6,9 +6,11 @@ import sr
 data = {}
 
 INTKEYS = (
+    "coach",
     "fixed_api_schedule",
     "group",
     "rostername",
+    "team",
     "tournament",
 )
 SETS = "fillerteams", "groups_watched"
@@ -52,6 +54,37 @@ def reload(name=None):
     data[name] = o
   return True
 reload()
+
+
+def results_file(tournamentId):
+  foldernum = int(tournamentId) // 1000 * 1000
+  foldername = f'{foldernum:0>8}'
+  filename = f'{tournamentId:0>8}.json'
+  return srdatadir() / "results" / foldername / filename
+
+
+def load_results(tournamentId):
+  p = results_file(tournamentId)
+  if p.is_file():
+    with p.open() as f:
+      results__ = json.load(f)  # teamIds are strings
+    return {
+        sr.team.Team(int(t)):
+        [sr.tournament.Matchup.Result(c) for c in r]
+        for t, r in results__.items()
+    }
+
+
+def save_results(tournamentId):
+  results = sr.tournament.Schedule(tournamentId).results
+  results_ = {
+      T.id: "".join([R.value for R in Tresults])
+      for T, Tresults in results.items()
+  }
+  p = results_file(tournamentId)
+  p.parent.mkdir(parents=True, exist_ok=True)  # ensure dir
+  with p.open("w") as f:
+    json.dump(results_, f, indent='\t', sort_keys=True)
 
 
 def save(name):

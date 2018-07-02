@@ -5,57 +5,72 @@ import xml.etree.ElementTree as ET
 host = 'fumbbl.com'
 
 
-def _get_json_obj(url):
+cache = {
+}
+
+
+def _get_json_obj(url, force_request=False):
   url = url.lower()
+  if not force_request and url in cache:
+    return cache[url]
   response = urllib.request.urlopen(url)
   data = response.read()
   obj = json.loads(data)
+  cache[url] = obj
   return obj
 
 
-def _get_xml_obj(url):
+def _get_xml_obj(url, force_request=False):
   url = url.lower()
+  if not force_request and url in cache:
+    return cache[url]
   response = urllib.request.urlopen(url)
   data = response.read()
   obj = ET.fromstring(data.decode('utf8'))
+  cache[url] = obj
   return obj
 
 
-def old_get__group_tournaments(groupId):
+def old_get__group_tournaments(groupId, *, force_request=False):
   url = f'https://{host}/xml:group?id={groupId}&op=tourneys'
-  return _get_xml_obj(url)
+  return _get_xml_obj(url, force_request)
 
 
-def old_get__match(matchId):
+def old_get__match(matchId, *, force_request=False):
   url = f'https://{host}/xml:matches?m={matchId}'
-  return _get_xml_obj(url).find('match')
+  return _get_xml_obj(url, force_request).find('match')
 
 
-def get__coach(coachId):
+def get__coach(coachId, *, force_request=False):
   url = f'https://{host}/api/coach/get/{coachId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
 
 
-def get__group_tournaments(groupId):
+def get__group_tournaments(groupId, *, force_request=False):
   url = f'https://{host}/api/group/tournaments/{groupId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
 
 
-def get__match(matchId):
+def get__match(matchId, *, force_request=False):
   url = f'https://{host}/api/match/get/{matchId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
 
 
-def get__roster(rosterId):
+def get__roster(rosterId, *, force_request=False):
   url = f'https://{host}/api/roster/get/{rosterId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
 
 
-def get__team(teamId):
+def get__team(teamId, *, force_request=False):
   url = f'https://{host}/api/team/get/{teamId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
 
 
-def get__tournament_schedule(tournamentId):
+def get__tournament_schedule(
+      tournamentId, *, force_request=False
+  ):
   url = f'https://{host}/api/tournament/schedule/{tournamentId}'
-  return _get_json_obj(url)
+  return _get_json_obj(url, force_request)
+
+
+

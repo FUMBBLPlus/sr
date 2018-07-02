@@ -43,6 +43,15 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
     return self.name or "* Some Coach *"
 
   @property
+  def apiname(self):
+    try:
+      return fumbblapi.get__coach(self.id).get("name")
+    # self.NO_COACH is not JSON serializable
+    except json.JSONDecodeError:
+      pass
+    return ...
+
+  @property
   def id(self):
     return self._KEY[0]  # set by metaclass
 
@@ -53,15 +62,15 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
   @property
   def name(self):
     if self._name is ...:
-      if self.srdata:
-        self._name = self.srdata[self.SRData.Idx.name]
-      else:
-        try:
-          self._name = fumbblapi.get__coach(self.id).get("name")
-        except json.JSONDecodeError:
-          self._name = None
-    if self._name is not ...:
-      return self._name
+      self._name = self.srdataname
+    if self._name is ...:
+      self._name = self.apiname
+    if self._name is ...:
+      self._name = None
+    return self._name
   @name.setter
   def name(self, name: str):
-    self._name = str(name)
+    if name is not None:
+      self._name = str(name)
+    else:
+      self._name = name

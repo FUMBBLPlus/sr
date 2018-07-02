@@ -66,15 +66,15 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
   def name_is_set(self):
     return (self._name is not ...)
 
-  def name_of_week(self, weeknr=None):
+  def name_of_week(self, weekNr=None):
     names = sr.data["rostername"].get(self.id)
     if names:
-      if weeknr is None:
+      if weekNr is None:
         return names[-1][-1]
       else:
-        weeknr = int(weeknr)
-        for start_weeknr, stop_weeknr, name in names:
-          if weeknr in range(start_weeknr, stop_weeknr):
+        weekNr = int(weekNr)
+        for start_weekNr, stop_weekNr, name in names:
+          if weekNr in range(start_weekNr, stop_weekNr):
             return name
         else:
           return name

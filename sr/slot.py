@@ -7,8 +7,8 @@ import sr
 class SlotGroup(metaclass=sr.helper.InstanceRepeater):
 
   class Idx(enum.IntEnum):
-    enterweeknr = 0
-    exitweeknr = 1
+    enterweekNr = 0
+    exitweekNr = 1
     coachslots = 2
     teamslots = 3
     nextslotgroup = 4
@@ -33,28 +33,28 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
   def name(self):
     return self._KEY  # set by metaclass/_get_key()
 
-  def rules(self, weeknr=None):
-    if weeknr is None:
-      weeknr = sr.time.current_weeknr()
+  def rules(self, weekNr=None):
+    if weekNr is None:
+      weekNr = sr.time.current_weekNr()
     for row in sr.data["slot"][self.name]:
-      weeknrs = range(
-          row[self.Idx.enterweeknr], row[self.Idx.exitweeknr]
+      weekNrs = range(
+          row[self.Idx.enterweekNr], row[self.Idx.exitweekNr]
       )
-      if weeknr in weeknrs:
+      if weekNr in weekNrs:
         # Copy row to prevent messing up sr.data["slot"].
         rules = list(row)
         nextslotgroup = SlotGroup(rules[self.Idx.nextslotgroup])
         rules[self.Idx.nextslotgroup] = nextslotgroup
         return self.Rules(*rules)
 
-  def coachslots(self, weeknr=None):
-    return self.rules(weeknr).coachslots
+  def coachslots(self, weekNr=None):
+    return self.rules(weekNr).coachslots
 
-  def nextslotgroup(self, weeknr=None):
-    return self.rules(weeknr).nextslotgroup
+  def nextslotgroup(self, weekNr=None):
+    return self.rules(weekNr).nextslotgroup
 
-  def pointsincluded(self, weeknr=None):
-    return self.rules(weeknr).pointsincluded
+  def pointsincluded(self, weekNr=None):
+    return self.rules(weekNr).pointsincluded
 
-  def teamslots(self, weeknr=None):
-    return self.rules(weeknr).teamslots
+  def teamslots(self, weekNr=None):
+    return self.rules(weekNr).teamslots

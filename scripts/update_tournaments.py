@@ -18,23 +18,23 @@ srtitles = sr.tournament.srtitles()
 
 
 def enter_info(T):
-  enterweeknr = T.srenterweeknr
-  if enterweeknr:
-    date = sr.time.firstdate(enterweeknr)
-    return f'{date} [{enterweeknr}]'
+  enterweekNr = T.srenterweekNr
+  if enterweekNr:
+    date = sr.time.firstdate(enterweekNr)
+    return f'{date} [{enterweekNr}]'
   else:
     return 'unknown'
 
 
 def exit_info(T):
-  exitweeknr = T.srlatestexitweeknr
-  if exitweeknr:
-    islatest = (exitweeknr == T.srexitweeknr)
-    date = sr.time.firstdate(exitweeknr)
+  exitweekNr = T.srlatestexitweekNr
+  if exitweekNr:
+    islatest = (exitweekNr == T.srexitweekNr)
+    date = sr.time.firstdate(exitweekNr)
     if islatest:
-      return f'{date} [{exitweeknr}]'
+      return f'{date} [{exitweekNr}]'
     else:
-      return f'({date}) [{exitweeknr}]'
+      return f'({date}) [{exitweekNr}]'
   else:
     return 'unknown'
 
@@ -336,7 +336,7 @@ def input_srfsgname(T):
 
 @inpcode_removing(6000)
 def input_srenter(T):
-  print('Enter weeknr (integer) or date (YYYY-MM-DD)?')
+  print('Enter weekNr (integer) or date (YYYY-MM-DD)?')
   print('  ?: unknown')
   print(f'  <Enter>: unchanged ({enter_info(T)})')
   sys.stdout.flush()
@@ -357,14 +357,14 @@ def input_srenter(T):
         continue
       else:
         dt = datetime.date(dt.year, dt.month, dt.day)
-        I = sr.time.weeknr(dt)
-    T.srenterweeknr = I
+        I = sr.time.weekNr(dt)
+    T.srenterweekNr = I
     break
 
 
 @inpcode_removing(7000)
 def input_srexit(T):
-  print('Exit weeknr (integer) or date (YYYY-MM-DD)?')
+  print('Exit weekNr (integer) or date (YYYY-MM-DD)?')
   print('  ?: unknown')
   print(f'  <Enter>: unchanged ({exit_info(T)})')
   sys.stdout.flush()
@@ -385,8 +385,8 @@ def input_srexit(T):
         continue
       else:
         dt = datetime.date(dt.year, dt.month, dt.day)
-        I = sr.time.weeknr(dt)
-    T.srexitweeknr = I
+        I = sr.time.weekNr(dt)
+    T.srexitweekNr = I
     break
 
 
@@ -398,8 +398,8 @@ def input_tournamentdone(T):
   print('  3: class')
   print('  4: title')
   print('  5: first slot group name')
-  print('  6: enter date [weeknr]')
-  print('  7: exit date [weeknr]')
+  print('  6: enter date [weekNr]')
+  print('  7: exit date [weekNr]')
   print('  i: info')
   print('  <Enter>: done')
   sys.stdout.flush()

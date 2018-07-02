@@ -3,52 +3,52 @@ import sr
 
 class Report(metaclass=sr.helper.InstanceRepeater):
 
-  def __init__(self, weeknr: int):
+  def __init__(self, weekNr: int):
     pass
 
   def __repr__(self):
-    return f'Report({self.weeknr})'
+    return f'Report({self.weekNr})'
 
   @property
   def enters(self):
-    return sr.tournament.enters(self.weeknr)
+    return sr.tournament.enters(self.weekNr)
 
   @property
   def exits(self):
-    return sr.tournament.enters(self.weeknr)
+    return sr.tournament.enters(self.weekNr)
 
   @property
   def nr(self):
-    return weeknrs().index(self.weeknr)
+    return weekNrs().index(self.weekNr)
 
   @property
   def tournaments(self):
-    return sr.tournament.ofweeknr(self.weeknr)
+    return sr.tournament.ofweekNr(self.weekNr)
 
   @property
-  def weeknr(self):
+  def weekNr(self):
     return self._KEY[0]  # set by metaclass
 
 
 
 
 def current_report():
-  return Report(sr.time.current_weeknr())
+  return Report(sr.time.current_weekNr())
 
 
 
 
-_weeknrs = ...
-def weeknrs(*, rebuild=False):
-  global _weeknrs
-  if _weeknrs is ... or rebuild:
+_weekNrs = ...
+def weekNrs(*, rebuild=False):
+  global _weekNrs
+  if _weekNrs is ... or rebuild:
     r = set()
     for T in sr.tournament.added():
-      if T.ismain and T.srenterweeknr is not None:
-        r.add(T.srenterweeknr)
-        if T.srexitweeknr is not None:
-          r.add(T.srexitweeknr)
-    max_weeknr = sr.time.current_weeknr() + 1
-    _weeknrs = tuple(sorted({w for w in r if w <= max_weeknr}))
-  return _weeknrs
+      if T.ismain and T.srenterweekNr is not None:
+        r.add(T.srenterweekNr)
+        if T.srexitweekNr is not None:
+          r.add(T.srexitweekNr)
+    max_weekNr = sr.time.current_weekNr() + 1
+    _weekNrs = tuple(sorted({w for w in r if w <= max_weekNr}))
+  return _weekNrs
 

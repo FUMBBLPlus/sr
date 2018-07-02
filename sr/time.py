@@ -22,8 +22,8 @@ ONEDAY = datetime.timedelta(1)
 ONEWEEK = datetime.timedelta(7)
 
 
-def current_weeknr():
-  return weeknr(now())
+def current_weekNr():
+  return weekNr(now())
 
 
 _fumbblyears = ...
@@ -32,13 +32,13 @@ def fumbblyears(*, rebuild=False):
   if _fumbblyears is ... or rebuild:
     result = {}
     for y, T in enumerate(sr.tournament.fumbblcups(), 2):
-      start_weeknr = T.srenterweeknr + 1
-      stop_weeknr = T.srlatestexitweeknr + 1
+      start_weekNr = T.srenterweekNr + 1
+      stop_weekNr = T.srlatestexitweekNr + 1
       if y == 2:
-        result[y - 1] = range(0, start_weeknr)
-      result[y] = range(start_weeknr, stop_weeknr)
+        result[y - 1] = range(0, start_weekNr)
+      result[y] = range(start_weekNr, stop_weekNr)
     else:
-      result[y] = range(start_weeknr, 999999999)
+      result[y] = range(start_weekNr, 999999999)
     _fumbblyears = result
   return _fumbblyears
 
@@ -74,7 +74,7 @@ def tz_aware(datetimeobj):
   return False
 
 
-def weeknr(datetimeobj):
+def weekNr(datetimeobj):
   dt = datetimeobj
   if hasattr(dt, 'microsecond'):
     days = (dt - ZEROTIME).days
@@ -83,29 +83,29 @@ def weeknr(datetimeobj):
   return math.floor(days / 7)
 
 
-@sr.helper.default_from_func("weeknr", current_weeknr)
-def firstdate(weeknr):
-  dt = firsttime(weeknr)
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def firstdate(weekNr):
+  dt = firsttime(weekNr)
   return datetime.date(dt.year, dt.month, dt.day)
 
 
-@sr.helper.default_from_func("weeknr", current_weeknr)
-def firsttime(weeknr):
-  return ZEROTIME + weeknr * ONEWEEK
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def firsttime(weekNr):
+  return ZEROTIME + weekNr * ONEWEEK
 
 
-@sr.helper.default_from_func("weeknr", current_weeknr)
-def fumbblyear(weeknr):
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def fumbblyear(weekNr):
   for y, r in fumbblyears().items():
-    if weeknr in r:
+    if weekNr in r:
       return y
 
 
-@sr.helper.default_from_func("weeknr", current_weeknr)
-def lastdate(weeknr):
-  return  firstdate(weeknr) + ONEWEEK - ONEDAY
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def lastdate(weekNr):
+  return  firstdate(weekNr) + ONEWEEK - ONEDAY
 
 
-@sr.helper.default_from_func("weeknr", current_weeknr)
-def lasttime(weeknr):
-  return  firsttime(weeknr) + ONEWEEK - MICROSECOND
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def lasttime(weekNr):
+  return  firsttime(weekNr) + ONEWEEK - MICROSECOND

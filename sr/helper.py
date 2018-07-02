@@ -87,6 +87,9 @@ def default_from_func(name, cbfunc, *cbargs, **cbkwargs):
 
 def srdata(name, colnames):
 
+  def savesrdata(cls):
+    sr._data.save(cls.SRData.name)
+
   def srdata(self):
     srdata_row = sr.data[self.SRData.name].get(self.id)
     if srdata_row:
@@ -95,6 +98,9 @@ def srdata(name, colnames):
   def srdataischanged(self):
     return (self.srdata != self.srnewdata)
 
+  def srisnew(self):
+    return (self.srdata is None)
+
   def srnewdata(self):
     attrs = tuple(self.SRData.Idx.__members__)
     return tuple(getattr(self, a) for a in attrs)
@@ -102,9 +108,18 @@ def srdata(name, colnames):
   def srnewdata_apply(self):
     sr.data[self.SRData.name][self.id] = list(self.srnewdata)
 
+  def srdatagetter(fieldname):
+    def method(self):
+      if self.srdata:
+        return self.srdata[self.SRData.Idx[fieldname]]
+      else:
+        return ...
+    return method
+
   property_attr = {
     "srdata": (srdata,),
     "srdataischanged": (srdataischanged,),
+    "srisnew": (srisnew,),
     "srnewdata": (srnewdata,),
   }
   method = {
@@ -128,9 +143,16 @@ def srdata(name, colnames):
     for mname, meth in method.items():
       if not hasattr(cls, mname):
         setattr(cls, mname, meth)
+    for c in colnames:
+      a = f'srdata{c}'
+      if not hasattr(cls, a):
+        setattr(cls, a, property(srdatagetter(c)))
+    setattr(cls, "savesrdata", classmethod(savesrdata))
     return cls
   return real_decorator
 
 
-
-
+def srdatarecord(fieldname):
+  def method(self):
+    if self.srdata:
+      return self.srdata[self.SRData.Idx[fieldname]]
