@@ -85,7 +85,43 @@ def default_from_func(name, cbfunc, *cbargs, **cbkwargs):
 
 
 
-def srdata(name, colnames):
+def idkey(cls):
+  def _get_key(cls, id_: int):
+    return int(id_)
+  if not hasattr(cls, "_get_key"):
+    setattr(cls, "_get_key", classmethod(_get_key))
+  if not hasattr(cls, "id"):
+    setattr(cls, "id", property(lambda self: self._KEY))
+  if "__repr__" not in cls.__dict__:  # hasattr is always True
+    setattr(cls, "__repr__",
+          lambda self: f'{self.__class__.__name__}({self.id})'
+    )
+  return cls
+
+
+
+
+def srdata(name, colnames,
+      valattrmapping=None,
+      valfsetmapping=None,
+  ):
+
+  valattrmapping = valattrmapping or {}
+  valfsetmapping = valfsetmapping or {}
+
+  def initdecorator(initmethod):
+    @functools.wraps(initmethod)
+    def wrapper(self, *args, **kwargs):
+      for colname in colnames:
+        if not hasattr(self, f'_{colname}'):
+          setattr(self, f'_{colname}', ...)
+      initmethod(self, *args, **kwargs)
+    return wrapper
+
+  def issetfactory(colname):
+    def method(self):
+      return (getattr(self, f'_{colname}') is not ...)
+    return method
 
   def savesrdata(cls):
     sr._data.save(cls.SRData.name)
@@ -108,13 +144,44 @@ def srdata(name, colnames):
   def srnewdata_apply(self):
     sr.data[self.SRData.name][self.id] = list(self.srnewdata)
 
-  def srdatagetter(fieldname):
+  def srdatafgetfactory(colname):
     def method(self):
       if self.srdata:
-        return self.srdata[self.SRData.Idx[fieldname]]
+        return self.srdata[self.SRData.Idx[colname]]
       else:
         return ...
     return method
+
+  def valfgetfactory(colname, valattrs=None):
+    valattrs = valattrs or []
+    def fget(self):
+      for valattr in valattrs:
+        if getattr(self, f'_{colname}') is ...:
+          val = getattr(self, valattr)
+          setattr(self, f'_{colname}', val)
+          if val is not ...:
+            return val
+      else:
+        if getattr(self, f'_{colname}') is ...:
+          setattr(self, f'_{colname}', None)
+      return getattr(self, f'_{colname}')
+    return fget
+  def valfsetfactory(colname, valfset=None):
+    if valfset is None:
+      if "Id" in colname or "Nr" in colname:
+        valfset = int
+      else:
+        valfset = str
+    def fset(self, val):
+      if val is not None:
+        setattr(self, f'_{colname}', valfset(val))
+      else:
+        setattr(self, f'_{colname}', None)
+    return fset
+  def valfdelfactory(colname):
+    def fdel(self):
+      setattr(self, f'_{colname}', ...)
+    return fdel
 
   property_attr = {
     "srdata": (srdata,),
@@ -127,6 +194,7 @@ def srdata(name, colnames):
   }
 
   def real_decorator(cls):
+    cls.__init__ = initdecorator(cls.__init__)
     if not hasattr(cls, "SRData"):
       Idx = enum.IntEnum(
           "Idx",
@@ -143,16 +211,21 @@ def srdata(name, colnames):
     for mname, meth in method.items():
       if not hasattr(cls, mname):
         setattr(cls, mname, meth)
-    for c in colnames:
-      a = f'srdata{c}'
-      if not hasattr(cls, a):
-        setattr(cls, a, property(srdatagetter(c)))
+    for colname in colnames:
+      a0 = f'srdata{colname}'
+      if not hasattr(cls, a0):
+        setattr(cls, a0, property(srdatafgetfactory(colname)))
+      if not hasattr(cls, colname):
+        valattrs = valattrmapping.get(colname, [a0])
+        valfset = valfsetmapping.get(colname, None)
+        setattr(cls, colname, property(
+            valfgetfactory(colname, valattrs),
+            valfsetfactory(colname, valfset),
+            valfdelfactory(colname),
+        ))
+      a1 = f'{colname}isset'
+      if not hasattr(cls, a1):
+        setattr(cls, a1, property(issetfactory(colname)))
     setattr(cls, "savesrdata", classmethod(savesrdata))
     return cls
   return real_decorator
-
-
-def srdatarecord(fieldname):
-  def method(self):
-    if self.srdata:
-      return self.srdata[self.SRData.Idx[fieldname]]

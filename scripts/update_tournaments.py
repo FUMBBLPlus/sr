@@ -474,7 +474,7 @@ def print_tournament_short(T, indent=0):
 
 def tournament_inpcodes(T):
   result = {88888888}
-  if not T.srname_is_set:
+  if not T.srnameisset:
     result.add(1000)
   if T.srrank is None:
     result.add(2920)

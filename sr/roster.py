@@ -63,7 +63,7 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
     self._name = str(name)
 
   @property
-  def name_is_set(self):
+  def nameisset(self):
     return (self._name is not ...)
 
   def name_of_week(self, weekNr=None):

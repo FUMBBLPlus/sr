@@ -158,7 +158,7 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
         teams = set()
         for d1 in d0["teams"]:
           team = sr.team.Team(d1["id"])
-          if not team.name_is_set:
+          if not team.nameisset:
             # I have the team name known here so I set it and I
             # may spare the FUMBBL API request for it later
             team.name = d1["name"]
@@ -725,10 +725,10 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srname(self):
-    if not self.srname_is_set and self.srdata:
+    if not self.srnameisset and self.srdata:
       srdataidx = self.SRData.Idx.srname
       self._srname = self.srdata[srdataidx]
-    if self.srname_is_set:
+    if self.srnameisset:
       return self._srname
     else:
       return self.name
@@ -737,7 +737,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     self._srname = str(name).upper()
 
   @property
-  def srname_is_set(self):
+  def srnameisset(self):
     return (self._srname is not ...)
 
   @property
@@ -845,7 +845,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       w = self.group.apidata_tournament[self].get("winner")
       if w:
         team = sr.team.Team(int(w["id"]))
-        if not team.name_is_set:
+        if not team.nameisset:
           # I have the team name known here so I set it and I
           # may spare the FUMBBL API request for it later
           team.name = w["name"]
