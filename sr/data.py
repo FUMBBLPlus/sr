@@ -7,7 +7,7 @@ data = {}
 
 INTKEYS = (
     "coach",
-    "fixed_api_schedule",
+    "api_fixed_get__tournament_schedule",
     "group",
     "rostername",
     "team",
@@ -61,6 +61,12 @@ def results_file(tournamentId):
   foldername = f'{foldernum:0>8}'
   filename = f'{tournamentId:0>8}.json'
   return srdatadir() / "results" / foldername / filename
+
+
+def delete_results(tournamentId):
+  p = results_file(tournamentId)
+  if p.is_file():
+    p.unlink()  # delete file
 
 
 def load_results(tournamentId):

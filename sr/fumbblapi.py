@@ -2,6 +2,9 @@ import json
 import urllib.request
 import xml.etree.ElementTree as ET
 
+import sr
+
+
 host = 'fumbbl.com'
 
 
@@ -69,6 +72,9 @@ def get__team(teamId, *, force_request=False):
 def get__tournament_schedule(
       tournamentId, *, force_request=False
   ):
+  srdataname = "api_fixed_get__tournament_schedule"
+  if tournamentId in sr.data[srdataname]:
+    return sr.data[srdataname][tournamentId]
   url = f'https://{host}/api/tournament/schedule/{tournamentId}'
   return _get_json_obj(url, force_request)
 

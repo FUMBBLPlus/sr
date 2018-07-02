@@ -161,7 +161,7 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
           if not team.nameisset:
             # I have the team name known here so I set it and I
             # may spare the FUMBBL API request for it later
-            team.name = d1["name"]
+            team.name = d1.get("name", ...)
           teams.add(team.id)
         matchup = Matchup(
             self.tournament.id, d0["round"], frozenset(teams)
