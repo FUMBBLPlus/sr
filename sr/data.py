@@ -75,5 +75,7 @@ def dumps_intkey_one_val_per_row(name):
   return s
 
 _dumpfunc = {
-    "tournament": dumps_intkey_one_val_per_row
+    "coach": dumps_intkey_one_val_per_row,
+    "team": dumps_intkey_one_val_per_row,
+    "tournament": dumps_intkey_one_val_per_row,
 }

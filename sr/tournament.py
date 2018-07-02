@@ -96,7 +96,7 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def apidata(self):
-    if self._apidata in (None, ...):
+    if self._apidata is ...:
       li = fumbblapi.get__tournament_schedule(
           self.tournament.id
       )
@@ -214,7 +214,6 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
 
 
-#@functools.total_ordering
 class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   def _main_only(method):
@@ -299,6 +298,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return result
 
   class SRData(sr.helper.NoInstances):
+    name = "tournament"
     class Idx(enum.IntEnum):
       groupId = 0
       maintournamentId = 1
@@ -351,7 +351,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def group(self):
-    if self._groupId in (None, ...) and self.srdata:
+    if self._groupId is ... and self.srdata:
       self._groupId = self.srdata[self.SRData.Idx.groupId]
     # Note that currently there is no FUMBBL API endpoint to get
     # the group of an arbitrary tournament.
@@ -389,7 +389,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def iselim(self):
-    if self._iselim in (None, ...) and self.srdata:
+    if self._iselim in ... and self.srdata:
       srclassval = self.srdata[self.SRData.Idx.srclass]
       self._iselim = self.SRClass.iselim(srclassval)
     if self._iselim in (None, ...):
@@ -420,7 +420,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def level(self):
-    if self._level in (None, ...) and self.srdata:
+    if self._level is ... and self.srdata:
       srclassval = self.srdata[self.SRData.Idx.srclass]
       self._level = self.SRClass.level(srclassval)
     if self._level in (None, ...) and self.group:
@@ -503,7 +503,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srdata(self):
-    srdata_row = sr.data["tournament"].get(self.id)
+    srdata_row = sr.data[self.SRData.name].get(self.id)
     if srdata_row:
       return tuple(srdata_row)
 
@@ -514,7 +514,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   @_main_only
   def srenterweeknr(self):
-    if self._srenterweeknr in (None, ...) and self.srdata:
+    if self._srenterweeknr is ... and self.srdata:
       srdataidx = self.SRData.Idx.srenterweeknr
       self._srenterweeknr = self.srdata[srdataidx]
     if self._srenterweeknr in (None, ...):
@@ -535,7 +535,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   @_main_only
   def srexitweeknr(self):
-    if self._srexitweeknr in (None, ...) and self.srdata:
+    if self._srexitweeknr is ... and self.srdata:
       srdataidx = self.SRData.Idx.srexitweeknr
       self._srexitweeknr = self.srdata[srdataidx]
     if self._srexitweeknr in (None, ...):
@@ -589,7 +589,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   @_main_only
   def srfsg(self):
-    if self._srfsg in (None, ...) and self.srdata:
+    if self._srfsg is ... and self.srdata:
       srdataidx = self.SRData.Idx.srfsgname
       self._srfsg = sr.slot.SlotGroup(self.srdata[srdataidx])
     if self._srfsg in (None, ...) and self.group:
@@ -635,32 +635,6 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
           remains = sr.settings["tournament.srtitle.remains"]
         return srenterweeknr + remains
 
-    if self._srexitweeknr in (None, ...) and self.srdata:
-      srdataidx = self.SRData.Idx.srexitweeknr
-      self._srexitweeknr = self.srdata[srdataidx]
-    if self._srexitweeknr in (None, ...):
-      srenterweeknr = self.srenterweeknr
-      if srenterweeknr is not None:
-        srtitle = self.srtitle
-        if not srtitle:
-          remains = sr.settings["tournament.normal.remains"]
-          self._srexitweeknr = srenterweeknr + remains
-        else:
-          remains = sr.settings["tournament.srtitle.remains"]
-          prev, next_ = self.srsametitleprevnext
-          if next_:
-            next_srenterweeknr = next_.srenterweeknr
-            if next_srenterweeknr:
-              self._srexitweeknr = min(
-                  next_srenterweeknr, srenterweeknr + remains
-              )
-          else:
-            current_weeknr = sr.time.current_weeknr()
-            if srenterweeknr + remains <= current_weeknr:
-              self._srexitweeknr
-    if self._srexitweeknr is not ...:
-      return self._srexitweeknr
-
   @property
   def srname(self):
     if not self.srname_is_set and self.srdata:
@@ -687,7 +661,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srnteams(self):
-    if self._srnteams in (None, ...) and self.srdata:
+    if self._srnteams is ... and self.srdata:
       srclassval = self.srdata[self.SRData.Idx.srclass]
       self._srnteams = self.SRClass.srnteams(srclassval)
     if self._srnteams in (None, ...):
@@ -708,7 +682,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srrank(self):
-    if self._srrank in (None, ...) and self.srdata:
+    if self._srrank is ... and self.srdata:
       srclassval = self.srdata[self.SRData.Idx.srclass]
       self._srrank = self.SRClass.rank(srclassval)
     if self._srrank in (None, ...) and self.group:
@@ -759,7 +733,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   @_main_only
   def srtitle(self):
-    if self._srtitle in (None, ...) and self.srdata:
+    if self._srtitle is ... and self.srdata:
       srdataidx = self.SRData.Idx.srtitle
       self._srtitle = self.srdata[srdataidx]
     if self._srtitle in (None, ...) and self.group:
@@ -790,7 +764,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         return team
 
   def srnewdata_apply(self):
-    sr.data["tournament"][self.id] = list(self.srnewdata)
+    sr.data[self.SRData.name][self.id] = list(self.srnewdata)
 
 
 
@@ -800,7 +774,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 def added():
   return {
       Tournament(tournamentId)
-      for tournamentId in sr.data["tournament"]
+      for tournamentId in sr.data[Tournament.SRData.name]
   }
 
 
@@ -809,17 +783,23 @@ def all():
 
 
 def changed():
-  return {
-      tournament for tournament in all()
-      if tournament.srdataischanged
-  }
+  return {T for T in all() if T.srdataischanged}
+
+
+@sr.helper.default_from_func("weeknr", sr.time.current_weeknr)
+def knownlasttimer(weeknr):
+  return exits(weeknr + 1)
+
+
+def fumbblcups():
+  return sorted({
+      T for T in all() if T.ismain
+      and T.srfsg is sr.slot.SlotGroup("FC")
+  })
 
 
 def main_unknown():
-  return {
-      tournament for tournament in all()
-      if tournament.main is None
-  }
+  return {T for T in all() if T.main is None}
 
 
 def new():
@@ -827,16 +807,42 @@ def new():
 
 
 def savesrdata():
-  sr._data.save("tournament")
+  sr._data.save(Tournament.SRData.name)
 
 
 def srtitles():
-  return {t.srtitle for t in added() if t.ismain and t.srtitle}
+  return {T.srtitle for T in added() if T.ismain and T.srtitle}
 
 
 def watched():
+  return {T for G in sr.group.watched() for T in G.tournaments}
+
+
+@sr.helper.default_from_func("weeknr", sr.time.current_weeknr)
+def ofweeknr(weeknr):
   return {
-      tournament
-      for group in sr.group.watched()
-      for tournament in group.tournaments
+      T for T in all()
+      if T.main.srenterweeknr is not None
+      and T.main.srlatestexitweeknr is not None
+      and weeknr in range(
+          T.main.srenterweeknr, T.main.srlatestexitweeknr
+      )
+  }
+
+
+@sr.helper.default_from_func("weeknr", sr.time.current_weeknr)
+def enters(weeknr):
+  return {
+      T for T in all()
+      if T.main.srenterweeknr is not None
+      and weeknr == T.main.srenterweeknr
+  }
+
+
+@sr.helper.default_from_func("weeknr", sr.time.current_weeknr)
+def exits(weeknr):
+  return {
+      T for T in all()
+      if T.main.srlatestexitweeknr is not None
+      and weeknr == T.main.srlatestexitweeknr
   }

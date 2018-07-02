@@ -20,7 +20,7 @@ srtitles = sr.tournament.srtitles()
 def enter_info(T):
   enterweeknr = T.srenterweeknr
   if enterweeknr:
-    date = sr.time.weeknr_firstdate(enterweeknr)
+    date = sr.time.firstdate(enterweeknr)
     return f'{date} [{enterweeknr}]'
   else:
     return 'unknown'
@@ -30,7 +30,7 @@ def exit_info(T):
   exitweeknr = T.srlatestexitweeknr
   if exitweeknr:
     islatest = (exitweeknr == T.srexitweeknr)
-    date = sr.time.weeknr_firstdate(exitweeknr)
+    date = sr.time.firstdate(exitweeknr)
     if islatest:
       return f'{date} [{exitweeknr}]'
     else:

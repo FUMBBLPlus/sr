@@ -26,6 +26,23 @@ def current_weeknr():
   return weeknr(now())
 
 
+_fumbblyears = ...
+def fumbblyears(*, rebuild=False):
+  global _fumbblyears
+  if _fumbblyears is ... or rebuild:
+    result = {}
+    for y, T in enumerate(sr.tournament.fumbblcups(), 2):
+      start_weeknr = T.srenterweeknr + 1
+      stop_weeknr = T.srlatestexitweeknr + 1
+      if y == 2:
+        result[y - 1] = range(0, start_weeknr)
+      result[y] = range(start_weeknr, stop_weeknr)
+    else:
+      result[y] = range(start_weeknr, 999999999)
+    _fumbblyears = result
+  return _fumbblyears
+
+
 def now():
   return datetime.datetime.now(TZ)
 
@@ -66,18 +83,29 @@ def weeknr(datetimeobj):
   return math.floor(days / 7)
 
 
-def weeknr_firstdate(weeknr):
-  dt = weeknr_firsttime(weeknr)
+@sr.helper.default_from_func("weeknr", current_weeknr)
+def firstdate(weeknr):
+  dt = firsttime(weeknr)
   return datetime.date(dt.year, dt.month, dt.day)
 
 
-def weeknr_firsttime(weeknr):
+@sr.helper.default_from_func("weeknr", current_weeknr)
+def firsttime(weeknr):
   return ZEROTIME + weeknr * ONEWEEK
 
 
-def weeknr_lastdate(weeknr):
-  return  weeknr_firstdate(weeknr) + ONEWEEK - ONEDAY
+@sr.helper.default_from_func("weeknr", current_weeknr)
+def fumbblyear(weeknr):
+  for y, r in fumbblyears().items():
+    if weeknr in r:
+      return y
 
 
-def weeknr_lasttime(weeknr):
-  return  weeknr_firsttime(weeknr) + ONEWEEK - MICROSECOND
+@sr.helper.default_from_func("weeknr", current_weeknr)
+def lastdate(weeknr):
+  return  firstdate(weeknr) + ONEWEEK - ONEDAY
+
+
+@sr.helper.default_from_func("weeknr", current_weeknr)
+def lasttime(weeknr):
+  return  firsttime(weeknr) + ONEWEEK - MICROSECOND

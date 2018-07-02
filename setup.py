@@ -5,7 +5,7 @@ FUMBBL SR Rankings module and scripts
 import pathlib
 import re
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 thisdir = pathlib.Path(__file__).parent
@@ -44,16 +44,16 @@ setup(
       "fantasyfootball",
       "fumbbl",
   ],
-  packages = find_packages(exclude=["test*"]),
+  packages = ["sr"],
   package_dir = {
-      "sr": "./sr",
+      "sr": "sr",
   },
   include_package_data = True,
   package_data={
       "": [
-          "sr/*.json",
           "LICENSE.txt",
-          "README.md"
+          "README.md",
+          "*.json",
       ],
   },
   install_requires = [

@@ -1,3 +1,9 @@
+import enum
+import functools
+import inspect
+
+
+import sr
 
 
 class InstanceRepeater(type):
@@ -41,7 +47,90 @@ class InstanceRepeater(type):
     return instance
 
 
+
+
 class NoInstances:
 
   def __new__(cls, *args, **kwargs):
     raise TypeError("class may not be instantiated")
+
+
+
+
+def default_from_func(name, cbfunc, *cbargs, **cbkwargs):
+  def real_decorator(func):
+    argsp = inspect.getfullargspec(func)
+    #print(argsp)
+    if name in argsp.args:
+      argsi = argsp.args.index(name)
+    else:
+      argsi = None
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+      #print([argsi, kw, args, kwargs])
+      if name in kwargs:
+        if kwargs[name] is None:
+            kwargs[name] = cbfunc(*cbargs, **cbkwargs)
+      elif argsi is not None:
+        if argsi == len(args):
+          args = list(args) + [None]
+        elif args:
+          args = list(args)
+        if args[argsi] is None:
+            args[argsi] = cbfunc(*cbargs, **cbkwargs)
+      return func(*args, **kwargs)
+    return wrapper
+  return real_decorator
+
+
+
+
+def srdata(name, colnames):
+
+  def srdata(self):
+    srdata_row = sr.data[self.SRData.name].get(self.id)
+    if srdata_row:
+      return tuple(srdata_row)
+
+  def srdataischanged(self):
+    return (self.srdata != self.srnewdata)
+
+  def srnewdata(self):
+    attrs = tuple(self.SRData.Idx.__members__)
+    return tuple(getattr(self, a) for a in attrs)
+
+  def srnewdata_apply(self):
+    sr.data[self.SRData.name][self.id] = list(self.srnewdata)
+
+  property_attr = {
+    "srdata": (srdata,),
+    "srdataischanged": (srdataischanged,),
+    "srnewdata": (srnewdata,),
+  }
+  method = {
+    "srnewdata_apply": srnewdata_apply,
+  }
+
+  def real_decorator(cls):
+    if not hasattr(cls, "SRData"):
+      Idx = enum.IntEnum(
+          "Idx",
+          {n:i for i, n in enumerate(colnames)},
+      )
+      cls.SRData = type(
+          "SRData",
+          (NoInstances,),
+          {"name": name, "Idx": Idx}
+      )
+    for pname, pattr in property_attr.items():
+      if not hasattr(cls, pname):
+        setattr(cls, pname, property(*pattr))
+    for mname, meth in method.items():
+      if not hasattr(cls, mname):
+        setattr(cls, mname, meth)
+    return cls
+  return real_decorator
+
+
+
+

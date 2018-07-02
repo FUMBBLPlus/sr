@@ -4,6 +4,7 @@ from . import fumbblapi
 import sr
 
 
+
 class SomeCoach:
 
   def __bool__(self):
@@ -22,6 +23,9 @@ class SomeCoach:
 SomeCoach = SomeCoach()  # singleton
 
 
+
+
+@sr.helper.srdata("coach", ("name",))
 class Coach(metaclass=sr.helper.InstanceRepeater):
 
   NO_COACH = "Error:0 No such coach found."
@@ -49,11 +53,15 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
   @property
   def name(self):
     if self._name is ...:
-      try:
-        self._name = fumbblapi.get__coach(self.id).get("name")
-      except json.JSONDecodeError:
-        self._name = None
-    return self._name
+      if self.srdata:
+        self._name = self.srdata[self.SRData.Idx.name]
+      else:
+        try:
+          self._name = fumbblapi.get__coach(self.id).get("name")
+        except json.JSONDecodeError:
+          self._name = None
+    if self._name is not ...:
+      return self._name
   @name.setter
   def name(self, name: str):
     self._name = str(name)
