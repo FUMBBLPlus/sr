@@ -4,28 +4,22 @@ from . import fumbblapi
 import sr
 
 
+@sr.helper.srdata("group",
+    (
+        "default_tournament_ismain",
+        "default_tournament_srrank",
+        "default_tournament_level",
+        "default_tournament_srtitle",
+        "default_tournament_srfsg",
+    ),
+)
+@sr.helper.idkey
 class Group(metaclass=sr.helper.InstanceRepeater):
-
-  class SRData(sr.helper.NoInstances):
-    class Idx(enum.IntEnum):
-      default_tournament_ismain = 0
-      default_tournament_srrank = 1
-      default_tournament_level = 2
-      default_tournament_srtitle = 3
-      default_tournament_srfsg = 4
 
   def __init__(self, groupId):
     self._apidata_tournament = ...
     self._oldapidata_tournament = ...
     self._name = ...
-    self._default_tournament_ismain = ...
-    self._default_tournament_srrank = ...
-    self._default_tournament_level = ...
-    self._default_tournament_srtitle = ...
-    self._default_tournament_srfsg = ...
-
-  def __repr__(self):
-    return f'Group({self.id})'
 
   def __str__(self):
     return self.name or '* Some Group *'
@@ -41,46 +35,6 @@ class Group(metaclass=sr.helper.InstanceRepeater):
       # The purpose of next line is explained in the method.
       self.set_for_tournaments(self._apidata_tournament)
     return self._apidata_tournament
-
-  @property
-  def default_tournament_ismain(self):
-    if self._default_tournament_ismain is ...:
-      if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_ismain
-        return self.srdata[srdataidx]
-
-  @property
-  def default_tournament_level(self):
-    if self._default_tournament_level is ...:
-      if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_level
-        return self.srdata[srdataidx]
-
-  @property
-  def default_tournament_srrank(self):
-    if self._default_tournament_srrank is ...:
-      if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_srrank
-        return self.srdata[srdataidx]
-
-  @property
-  def default_tournament_srfsg(self):
-    if self._default_tournament_srfsg is ...:
-      if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_srfsg
-        return self.srdata[srdataidx]
-
-  @property
-  def default_tournament_srtitle(self):
-    if self._default_tournament_srtitle is ...:
-      if self.srdata:
-        srdataidx = self.SRData.Idx .default_tournament_srtitle
-        return self.srdata[srdataidx]
-
-
-  @property
-  def id(self):
-    return self._KEY[0]  # set by metaclass
 
   @property
   def name(self):
@@ -104,12 +58,6 @@ class Group(metaclass=sr.helper.InstanceRepeater):
     return self._oldapidata_tournament
 
   @property
-  def srdata(self):
-    srdata_row = sr.data["group"].get(self.id)
-    if srdata_row:
-      return tuple(srdata_row)
-
-  @property
   def tournaments(self):
     tournaments_ = set(self.apidata_tournament)
     self.set_for_tournaments(tournaments_)  # explained below
@@ -120,9 +68,11 @@ class Group(metaclass=sr.helper.InstanceRepeater):
     # tournament from FUMBBL I catch every posiibility to set
     # the group of a tournament if its known.
     for tournament in tournaments_:
-      tournament.group = self
+      tournament.groupId = self.id
 
-def watched():
+
+
+def observed():
   return {
-      Group(groupId) for groupId in sr.data["groups_watched"]
+      Group(groupId) for groupId in sr.data["observed_groups"]
   }

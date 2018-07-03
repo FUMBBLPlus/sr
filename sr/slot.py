@@ -4,6 +4,7 @@ import enum
 import sr
 
 
+@sr.helper.idkey("name")
 class SlotGroup(metaclass=sr.helper.InstanceRepeater):
 
   class Idx(enum.IntEnum):
@@ -24,15 +25,9 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
     return name_
 
   def __init__(self, name: str):
-    pass
+    pass  # without this instantiation raises TypeError
 
-  def __repr__(self):
-    return f'SlotGroup("{self.name}")'
-
-  @property
-  def name(self):
-    return self._KEY  # set by metaclass/_get_key()
-
+  @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
   def rules(self, weekNr=None):
     if weekNr is None:
       weekNr = sr.time.current_weekNr()

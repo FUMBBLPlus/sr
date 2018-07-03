@@ -6,6 +6,7 @@ settings = _settings.settings
 from . import data as _data
 data = _data.data
 from . import helper
+from . import time
 
 # standard modules
 from . import coach
@@ -15,5 +16,4 @@ from . import report
 from . import roster
 from . import slot
 from . import team
-from . import time
 from . import tournament

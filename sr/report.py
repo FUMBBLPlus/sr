@@ -1,13 +1,11 @@
 import sr
 
 
+@sr.helper.idkey("weekNr")
 class Report(metaclass=sr.helper.InstanceRepeater):
 
   def __init__(self, weekNr: int):
     pass
-
-  def __repr__(self):
-    return f'Report({self.weekNr})'
 
   @property
   def enters(self):
@@ -25,10 +23,6 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   def tournaments(self):
     return sr.tournament.ofweekNr(self.weekNr)
 
-  @property
-  def weekNr(self):
-    return self._KEY[0]  # set by metaclass
-
 
 
 
@@ -43,6 +37,7 @@ def weekNrs(*, rebuild=False):
   global _weekNrs
   if _weekNrs is ... or rebuild:
     r = set()
+    # reports are based on (srdata) added tournaments
     for T in sr.tournament.added():
       if T.ismain and T.srenterweekNr is not None:
         r.add(T.srenterweekNr)

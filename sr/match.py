@@ -2,14 +2,12 @@ from . import fumbblapi
 import sr
 
 
+@sr.helper.idkey
 class Match(metaclass=sr.helper.InstanceRepeater):
 
   def __init__(self, matchId: int):
     self._apidata = ...
     self._oldapidata = ...
-
-  def __repr__(self):
-    return f'Match({self.id})'
 
   @property
   def apidata(self):
@@ -28,10 +26,6 @@ class Match(metaclass=sr.helper.InstanceRepeater):
   def finished(self):
     d = self.apidata
     return sr.time.strptime(f'{d["date"]} {d["time"]}')
-
-  @property
-  def id(self):
-    return self._KEY[0]  # set by metaclass
 
   @property
   def oldapidata(self):

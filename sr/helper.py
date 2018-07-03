@@ -60,14 +60,12 @@ class NoInstances:
 def default_from_func(name, cbfunc, *cbargs, **cbkwargs):
   def real_decorator(func):
     argsp = inspect.getfullargspec(func)
-    #print(argsp)
     if name in argsp.args:
       argsi = argsp.args.index(name)
     else:
       argsi = None
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-      #print([argsi, kw, args, kwargs])
       if name in kwargs:
         if kwargs[name] is None:
             kwargs[name] = cbfunc(*cbargs, **cbkwargs)
@@ -83,18 +81,46 @@ def default_from_func(name, cbfunc, *cbargs, **cbkwargs):
   return real_decorator
 
 
+# https://stackoverflow.com/a/14412901/2334951
+def doublewrap(f):
+  '''
+  a decorator decorator, allowing the decorator to be used as:
+  @decorator(with, arguments, and=kwargs)
+  or
+  @decorator
+  '''
+  @functools.wraps(f)
+  def new_dec(*args, **kwargs):
+    if (
+        len(args) == 1
+        and len(kwargs) == 0
+        and callable(args[0])
+    ):
+      # actual decorated function
+      return f(args[0])
+    else:
+      # decorator arguments
+      return lambda realf: f(realf, *args, **kwargs)
+
+  return new_dec
 
 
-def idkey(cls):
-  def _get_key(cls, id_: int):
-    return int(id_)
+NOTYPECAST = lambda v: v
+
+@doublewrap
+def idkey(cls, attrname="id", ftypecast=int):
+  def _get_key(cls, id_: ftypecast):
+    return ftypecast(id_)
   if not hasattr(cls, "_get_key"):
     setattr(cls, "_get_key", classmethod(_get_key))
-  if not hasattr(cls, "id"):
-    setattr(cls, "id", property(lambda self: self._KEY))
+  if not hasattr(cls, attrname):
+    setattr(cls, attrname, property(lambda self: self._KEY))
   if "__repr__" not in cls.__dict__:  # hasattr is always True
     setattr(cls, "__repr__",
-          lambda self: f'{self.__class__.__name__}({self.id})'
+        lambda self: (
+            f'{self.__class__.__name__}'
+            f'({getattr(self, attrname).__repr__()})'
+        )
     )
   return cls
 

@@ -13,7 +13,7 @@ INTKEYS = (
     "team",
     "tournament",
 )
-SETS = "fillerteams", "groups_watched"
+SETS = "fillerteams", "observed_groups"
 
 curr_path = pathlib.Path(__file__).parent
 
@@ -115,6 +115,7 @@ def dumps_intkey_one_val_per_row(name):
 
 _dumpfunc = {
     "coach": dumps_intkey_one_val_per_row,
+    "group": dumps_intkey_one_val_per_row,
     "team": dumps_intkey_one_val_per_row,
     "tournament": dumps_intkey_one_val_per_row,
 }

@@ -22,6 +22,7 @@ class SomeRoster:
 SomeRoster = SomeRoster()  # singleton
 
 
+@sr.helper.idkey
 class Roster(metaclass=sr.helper.InstanceRepeater):
 
   NO_ROSTER = '{"stars": [], "positions": []}'
@@ -32,9 +33,6 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
 
   def __bool__(self):
     return bool(self.name)
-
-  def __repr__(self):
-    return f'Roster({self.id})'
 
   def __str__(self):
     return self.name or "* Some Roster *"
@@ -48,15 +46,17 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
     return self._apidata
 
   @property
-  def id(self):
-    return self._KEY[0]  # set by metaclass
+  def apiname(self):
+    return self.apidata.get("name", ...)
 
   @property
   def name(self):
     if self._name is ...:
-      self._name = self.name_of_week()
-      if not self._name:
-        self._name = self.apidata.get("name")
+      self._name = self.nameofweek()
+    if self._name is ...:
+      self._name = self.apiname
+    if self._name is ...:
+        self._name = None
     return self._name
   @name.setter
   def name(self, name: str):
@@ -66,7 +66,7 @@ class Roster(metaclass=sr.helper.InstanceRepeater):
   def nameisset(self):
     return (self._name is not ...)
 
-  def name_of_week(self, weekNr=None):
+  def nameofweek(self, weekNr=None):
     names = sr.data["rostername"].get(self.id)
     if names:
       if weekNr is None:
