@@ -147,13 +147,13 @@ def input_formatchar(T):
 
 
 @inpcode_removing(2920)
-def input_srrank(T):
+def input_rank(T):
   print('Rank?')
   print('  ?: unknown')
   print('  MI: minor')
   print('  MA: major')
   print('  QU: major qualifier')
-  print(f'  <Enter>: unchange ({T.srrank})')
+  print(f'  <Enter>: unchange ({T.rank})')
   sys.stdout.flush()
   while True:
     I = input(INPUT_PROMPT).strip().upper()
@@ -168,13 +168,13 @@ def input_srrank(T):
     elif I:
       continue
     if I != "":
-      T.srrank = I
+      T.rank = I
     break
 
 
 @inpcode_removing(2930)
 def input_level(T):
-  if T.srrank is None:
+  if T.rank is None:
     inpcodes.add(2920)
     return
   print('Level?')
@@ -192,7 +192,7 @@ def input_level(T):
       continue
     if I != "":
       level, prev_level = I, T.level
-      if T.srrank in ("MA", "MI") and level < prev_level:
+      if T.rank in ("MA", "MI") and level < prev_level:
         T.level = level
         for T2 in set(T.qualifiers):
           if T2.level is not None and T.level <= T2.level:
@@ -202,10 +202,10 @@ def input_level(T):
               f' {T2.srname} ({T2.id})'
               ' is now unknown.'
             ))
-      elif T.srrank in ("MA", "MI") and prev_level < level:
+      elif T.rank in ("MA", "MI") and prev_level < level:
         T.level = level
         inpcodes.add(2931)
-      elif T.srrank in ("QU") and prev_level < level:
+      elif T.rank in ("QU") and prev_level < level:
         T.level = level
         main = T.main
         if main.level is not None:
@@ -457,7 +457,7 @@ def print_tournament(T):
   else:
     mainstr = "unknown"
   print(f'main tournament: {mainstr}')
-  print(f'class: {T.srclass}')
+  print(f'class: {T.srclassval}')
   if T.ismain:
     if T.srtitle:
         print(f'title: {T.srtitle}')
@@ -476,7 +476,7 @@ def tournament_inpcodes(T):
   result = {88888888}
   if not T.srnameisset:
     result.add(1000)
-  if T.srrank is None:
+  if T.rank is None:
     result.add(2920)
   if T.level is None:
     result.add(2930)
@@ -543,7 +543,7 @@ def edit_tournaments(tournaments=None):
       elif i == 2910:
         input_formatchar(T)
       elif i == 2920:
-        input_srrank(T)
+        input_rank(T)
       elif i == 2930:
         input_level(T)
       elif i == 2931:

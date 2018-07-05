@@ -24,14 +24,13 @@ SomeCoach = SomeCoach()  # singleton
 
 
 
-
 @sr.helper.srdata("coach",
     (
         "name",
     ),
     {
         "name": ["srdataname", "apiname"],
-    }
+    },
 )
 @sr.helper.idkey
 class Coach(metaclass=sr.helper.InstanceRepeater):

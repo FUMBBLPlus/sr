@@ -126,14 +126,15 @@ def idkey(cls, attrname="id", ftypecast=int):
 
 
 
-
 def srdata(name, colnames,
-      valattrmapping=None,
-      valfsetmapping=None,
-  ):
+    valattrmapping=None,
+    valsettermapping=None,
+    valdeletermapping=None,
+):
 
   valattrmapping = valattrmapping or {}
-  valfsetmapping = valfsetmapping or {}
+  valsettermapping = valsettermapping or {}
+  valdeletermapping = valdeletermapping or {}
 
   def initdecorator(initmethod):
     @functools.wraps(initmethod)
@@ -181,28 +182,36 @@ def srdata(name, colnames,
   def valfgetfactory(colname, valattrs=None):
     valattrs = valattrs or []
     def fget(self):
+      val = getattr(self, f'_{colname}')
+      print(["fget", colname, val])
       for valattr in valattrs:
-        if getattr(self, f'_{colname}') is ...:
+        if val is ...:
           val = getattr(self, valattr)
-          setattr(self, f'_{colname}', val)
           if val is not ...:
-            return val
+            break
       else:
-        if getattr(self, f'_{colname}') is ...:
-          setattr(self, f'_{colname}', None)
+        if val is ...:
+          val = None
+      if hasattr(self, f'_{colname}_fgetvalcast'):
+        val = getattr(self, f'_{colname}_fgetvalcast')(val)
+      elif hasattr(self, "_fgetvalcast"):
+        val = getattr(self, "_fgetvalcast")(colname, val)
+      setattr(self, f'_{colname}', val)
       return getattr(self, f'_{colname}')
     return fget
-  def valfsetfactory(colname, valfset=None):
-    if valfset is None:
-      if "Id" in colname or "Nr" in colname:
-        valfset = int
-      else:
-        valfset = str
+  def valfsetfactory(colname):
     def fset(self, val):
-      if val is not None:
-        setattr(self, f'_{colname}', valfset(val))
-      else:
-        setattr(self, f'_{colname}', None)
+      oldval = getattr(self, colname)
+      if hasattr(self, f'_{colname}_beforefset'):
+        val = getattr(self, f'_{colname}_beforefset')(val)
+      elif hasattr(self, "_beforefset"):
+        val = getattr(self, "_beforefset")(colname, val)
+      setattr(self, f'_{colname}', val)
+      newval = getattr(self, colname)
+      if hasattr(self, f'_{colname}_afterfset'):
+        getattr(self, f'_{colname}_afterfset')(newval, oldval)
+      elif hasattr(self, "_afterfset"):
+        getattr(self, "_afterfset")(colname, newval, oldval)
     return fset
   def valfdelfactory(colname):
     def fdel(self):
@@ -242,16 +251,31 @@ def srdata(name, colnames,
       if not hasattr(cls, a0):
         setattr(cls, a0, property(srdatafgetfactory(colname)))
       if not hasattr(cls, colname):
+        propertyattrs = [None] * 3
         valattrs = valattrmapping.get(colname, [a0])
-        valfset = valfsetmapping.get(colname, None)
-        setattr(cls, colname, property(
-            valfgetfactory(colname, valattrs),
-            valfsetfactory(colname, valfset),
-            valfdelfactory(colname),
-        ))
+        propertyattrs[0] = valfgetfactory(colname, valattrs)
+        if valsettermapping.get(colname, True):
+          propertyattrs[1] = valfsetfactory(colname)
+        if valdeletermapping.get(colname, True):
+          propertyattrs[2] = valfdelfactory(colname)
+        setattr(cls, colname, property(*propertyattrs))
       a1 = f'{colname}isset'
       if not hasattr(cls, a1):
         setattr(cls, a1, property(issetfactory(colname)))
-    setattr(cls, "savesrdata", classmethod(savesrdata))
+    if name is not None:
+      setattr(cls, "savesrdata", classmethod(savesrdata))
     return cls
   return real_decorator
+
+
+def default_srdata_typecast(cls):
+  def _cast(self, colname, val):
+    if val not in (None, ...):
+      if "Id" in colname or "Nr" in colname:
+        return int(val)
+      else:
+        return str(val)
+  for name in ("_fgetvalcast", "_beforefset"):
+    if not hasattr(cls, name):
+      setattr(cls, name, _cast)
+  return cls

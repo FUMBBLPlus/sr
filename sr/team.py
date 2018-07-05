@@ -3,6 +3,7 @@ import json
 from . import fumbblapi
 import sr
 
+@sr.helper.default_srdata_typecast
 @sr.helper.srdata("team",
     (
         "coachId",

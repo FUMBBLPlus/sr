@@ -7,10 +7,10 @@ import sr
 @sr.helper.srdata("group",
     (
         "default_tournament_ismain",
-        "default_tournament_srrank",
+        "default_tournament_rank",
         "default_tournament_level",
         "default_tournament_srtitle",
-        "default_tournament_srfsg",
+        "default_tournament_srfsgname",
     ),
 )
 @sr.helper.idkey
