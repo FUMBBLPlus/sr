@@ -1,11 +1,9 @@
 import pathlib
 
+import sr
 from .. import fumbblapi
 
-try:
-  import fumbbl_session as S
-except ImportError:
-  S = None
+
 
 class WikiPage:
 
@@ -22,3 +20,15 @@ class WikiPage:
 
   def content(self, **kwargs):
     return self.template.format(**kwargs)
+
+
+  @sr.helper.must_logged_in
+  def post(self,
+        summary=None,
+        minor_edit=True,
+        **content_kwargs
+    ):
+    content = self.content(**content_kwargs)
+    sr.helper.S.helppage.edit(
+        self.name, content, summary, minor_edit
+    )

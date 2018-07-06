@@ -11,7 +11,7 @@ class WikiPage(helper.WikiPage):
     if not updated:
       updated = sr.time.now()
     if hasattr(updated, "strftime"):
-      timefmt = "%y-%m-%d %H:%M"
+      timefmt = "%Y-%m-%d %H:%M"
       updated = updated.strftime(timefmt)
     kwargs["updated"] = updated
     kwargs["weeknr"] = sr.time.current_weekNr()

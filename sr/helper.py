@@ -1,9 +1,20 @@
 import enum
 import functools
+import getpass
 import inspect
 
 
 import sr
+
+
+try:
+  import fumbbl_session as S
+except ImportError as exc:
+  _S_importerror = exc
+  S = None
+
+
+INPUT_PROMPT = ":: "
 
 
 class InstanceRepeater(type):
@@ -54,6 +65,9 @@ class NoInstances:
   def __new__(cls, *args, **kwargs):
     raise TypeError("class may not be instantiated")
 
+
+
+class NotLoggedIn(Exception): pass
 
 
 
@@ -284,3 +298,58 @@ def default_srdata_typecast(cls):
     if not hasattr(cls, name):
       setattr(cls, name, _cast)
   return cls
+
+
+def input_integer(text):
+  while True:
+    I = input(f'{text} {INPUT_PROMPT}').strip()
+    if I.isdecimal():
+      return int(I)
+
+
+def input_string(text):
+  return input(f'{text} {INPUT_PROMPT}').strip()
+
+
+def input_yesno(text):
+  while True:
+    I = input(f'{text} {INPUT_PROMPT}').strip().upper()
+    if I in ("Y", "YES"):
+      return True
+    elif I in ("N", "NO"):
+      return False
+
+
+def ensure_logged_in(interactive=True):
+  if S is None:
+    raise _S_importerror
+  elif not S.logged_in():
+    save_user_name, save_password = False, False
+    user_name = sr.loginsettings["user_name"]
+    if user_name is None and interactive:
+      user_name = input(f'user name {INPUT_PROMPT}')
+      save_user_name = input_yesno(
+          f'should be saved?  {INPUT_PROMPT}'
+      )
+      if save_user_name:
+        sr.loginsettings["user_name"] = user_name
+    password = sr.loginsettings["password"]
+    if password is None and interactive:
+      password = getpass.getpass(f'password {INPUT_PROMPT}')
+      if save_user_name:
+        save_password = input_yesno(
+            f'should be saved?  {INPUT_PROMPT}'
+        )
+        if save_password:
+          sr.loginsettings["password"] = password
+    S.log_in(user_name, password)
+    if not S.logged_in():
+      raise NotLoggedIn("not logged in")
+
+@doublewrap
+def must_logged_in(func, interactive=True):
+  @functools.wraps(func)
+  def wrapper(*args, **kwargs):
+    ensure_logged_in(interactive=interactive)
+    return func(*args, **kwargs)
+  return wrapper

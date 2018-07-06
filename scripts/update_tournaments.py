@@ -10,7 +10,7 @@ import sys
 import sr
 
 
-INPUT_PROMPT = ":: "
+INPUT_PROMPT = sr.helper.INPUT_PROMPT
 
 inpcodes = None
 
@@ -50,24 +50,9 @@ def inpcode_removing(impcode):
   return real_decorator
 
 
-def input_integer(text):
-  while True:
-    I = input(f'{text} {INPUT_PROMPT}').strip()
-    if I.isdecimal():
-      return int(I)
-
-
-def input_string(text):
-  return input(f'{text} {INPUT_PROMPT}').strip()
-
-
-def input_yesno(text):
-  while True:
-    I = input(f'{text} {INPUT_PROMPT}').strip().upper()
-    if I in ("Y", "YES"):
-      return True
-    elif I in ("N", "NO"):
-      return False
+input_integer = sr.helper.input_integer
+input_string = sr.helper.input_string
+input_yesno = sr.helper.input_yesno
 
 
 @inpcode_removing(1000)
