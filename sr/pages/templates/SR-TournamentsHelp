@@ -1,0 +1,52 @@
+[<<< Back to the SR main page|SR]
+
+!!! OBC Sport SR Rankings Tournaments Help
+%%%
+
+!Name
+OFC Sport SR Rankings consistently uses a standardized name system of official FUMBBL Tournaments. This was necessary to get developed because names of official FUMBBL Tournaments are inconsistent in style, format and numbering. We apply the following translations:
+
+* __BALL__: Ball Brawl
+* __BARB__: B.A.R Brawl
+* __BBB__: Black Box Brawl
+* __BBBB__: Black Box Birthday Bash
+* __BC__: Black Cup
+* __BC MINOR__: Black Cup Minor
+* __BMIN__: FUMBBL B Minor
+* __COS__: Crown of Sand
+* __FC__: FUMBBL Cup
+* __FUBC__: FUBAR Cup
+* __GLT__: Grotty Little Tournament
+* __LC__: Lustrian Challenge
+* __RMIN__: FUMBBL Minors
+* __RRR__: Royal Rookie Rumble
+* __SF__: Speed Freaks
+* __SM__: FUMBBL Smack
+* __SMS__: FUMBBL Smack Scheduled
+* __SMSB__: FUMBBL Smack Scheduled Brawl
+* __TOUR__: FUMBBL Tour
+* __UI__: Ulthuan Invitational
+* __WF__: Warpstone Fragment
+* __WO__: Warpstone Open
+* __WOC__: Wheel of Chaos
+* __XFL__: Xenophobes' Federated Leagues
+* __XFL MASTERS__: Xenophobes' Federated Leagues Masters
+
+!Rank, Level, Format, Teams
+See ''Tournament Points'' section of the [Rulebook|SR-Rulebook].
+
+!Points
+The points scheme is determindeb by the ''Rank'', ''Level'', ''Format'', and the ''Number of Teams'' and can be found in ''Table 1'' and ''Table 2'' in the [Rulebook|SR-Rulebook]. To spare the lookup, we listed the points scheme of tournaments in this column. However, their format has to be made compact.
+
+*For ''Elimination'' (E) tournaments, the first value shows the ''Initial'' points which is followed by two colons then the points yielded for highest win by match of rounds 1, 2, 3, ... joined with dashes. Naturally the last values shows the points gained by the winner of the tournament (if won by match).
+
+*For ''Non-Elimination'' (N) tournaments, the first value shows the ''Initial'' points which is followed by two colons then the additional points yielded for each W/D/L results. After another two colons comes the additional points yielded for the winner of the tournament.
+
+!First Slot Group
+See ''Slot Groups'' and ''SR Points'' sections of the [Rulebook|SR-Rulebook].
+
+!Enter Date
+Date of the first ''Report'' which contains the tournament. See ''Reports and Tournaments'' section of the [Rulebook|SR-Rulebook] for more.
+
+!Exit Date
+Date of the first ''Report'' which does not contain the tournament because of its expiration. If it is enclosed by parentheses, that means that this date is not final yet and can be easily set to an earlier date if the next tournament of the same kind ends. However, the final Exit Date can be no greater than those in parentheses. See ''Reports and Tournaments'' section of the [Rulebook|SR-Rulebook] for more.

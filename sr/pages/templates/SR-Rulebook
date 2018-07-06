@@ -1,0 +1,123 @@
+[<<< Back to the SR main page|SR]
+!!! OBC Sport SR Rankings Rulebook
+SR version 2.0
+%%%
+%%%
+
+__The ''SR Rankings'' is the mathematical method of ranking FUMBBL teams and coaches on a calendar-year basis based on their performances on official competitive win-aimed tournaments.__
+
+%%%
+!!Reports and Tournaments
+
+The ''SR Rankings'' are published in ''Reports'' after each __Monday 8:00 AM__ (server time) when there are at least one tournament entered to or exited from the system. Major qualifiers move along with their main tournament but XFL Qualifiers are handled separately. A tournament enters into the system in the next ''Report'' after it finishes and remains there for 52 calendar weeks by default. The following tournaments are exceptional as they may get replaced in the system by the next tournament of the same kind. If that does not happen, points earned on these tournaments remain in the system for 78 calendar weeks:
+
+*Ball Brawl
+*Black Cup
+*Crown of Sand
+*FUBAR Cup
+*FUMBBL Cup
+*Grotty Little Tournament
+*Lustrian Challenge
+*Ulthuan Invitational
+*Warpstone Open
+*Wheel of Chaos
+*Xenophobes' Federated Leagues Qualifiers (each rosters separately)
+*Xenophobes' Federated Leagues Masters
+
+%%%
+!!Tournament Points
+
+Tournaments yield points based on their rank, level, format, number of teams, and based on the performance of the team/coach.
+
+__Format__: SR has two tournament formats: ''Elimination'' (E) and ''Non-elimination'' (N). Knockout and King of the Hill tournaments are Elimination format tournaments, while Swiss and Round-robin tournaments are Non-Elimination format tournaments.
+
+__Rank__: There are three ranks: ''Major'' (MA), ''Minor'' (MI), and ''Major Qualifier'' (QU). Tournament ranks should be obvious except for XFL Qualifiers which are considered as Minor tournaments. Currently the XFL Masters Groups are considered as Major Qualifiers, while the XFL Masters Final is a Major tournament. Historically there were XFL Masters which were Minor tournaments.
+
+__Level__: A Level 1 tournament has no qualifiers while a level 2 tournaments have level 1 qualifiers etc. Note that XFL Qualifiers are considered as Level 1 MI tournaments, XFL Masters Groups are Level 2 QU tournaments, while the XFL Masters Final is a Level 3 MA tournament.
+
+__Number of Teams__: This is the number of non-filler teams in round 1 of the schedule of the tournament. The point allocation rules are set for ranges of these numbers, eg. a tournament with 14 teams may fit to a point allocation rule set for 13–16 teams. Not requiresd for ''Non-elimination'' tournaments.
+
+__Performance__: Performances are handled differently for the two formats. Concessions, forfeits, and dropouts are punished. All tournaments yield a small amount of initial points even if the participant loses all matches. This is not only an incentive for participation but also to play the match without conceding as a first round forfeit/dropout/concession takes away these points and result a zero point performance. On top of that, these performances have priority over others in taking slots and may easily displace better performances (see ''SR Points'' section below.)
+
+*For ''Elimination'' tournaments, the points are determined by the highest round's valid win by match. A dropout/forfeit/concession invalidates a win as a punishment. Consider every participant as having a free initial win which yields the initial points. But also this virtual win can get invalidated and end up with zero points if one does not play the first match or concedes there.
+
+{center
+__Table 1.__ Points Table of Elimination Format Tournaments
+
+[https://fumbbl.com/i/559172]
+}
+
+%%%
+*For ''Non-Elimination'' tournaments, every regularly played match worth points, even losses. A dropout/forfeit/concession decreases the earned points by W+D amount of points but the final number of points can never be lower than zero. Participants start these tournaments too with some initial points, but the final winners receive additional W number of points as if they would win one extra match.
+
+{center
+__Table 2.__ Points Table of Non-Elimination Format Tournaments
+
+[https://fumbbl.com/i/561323]
+}
+
+%%%
+!!Wasted Points
+
+Teams and coaches may not get all the points they earned. Earned points which are excluded from their ''SR Points'' are called as ''Wasted Points''.
+
+Points are wasted because no vacant slots are remained for them possibly because those slots were taken by better performances. Once a good performance gets out of the system then a formerly wasted performance can easily fill the vacancy.
+
+%%%
+!!Multiple Applications
+
+If a coach applied with multiple teams to a given tournament (whether these teams applied to different qualifiers or not) then the least of the points are divided equally among the teams fractions rounded down. The points from the better perfomances are completely removed from the system and not even shown as ''Wasted Points''.
+
+For example if a coach applied with two teams for the same tournament and they earn 100 and 36 points then both teams will be credited with 18 ''SR Points'' and the coach will be creadited with 36 for that tournament. If any of the teams is conceded, forfeited or dropped out then it applies to the coach in the sense of the ''Coach Rankings''.
+
+%%%
+!!Slot Groups
+
+Team and Coach rankings have different slot rules and these rules changed and may will change over time. A slot rule in effect determines what kind of slots groups are, what kind of tournament performances they accept,  how many slots they contain, which order they are checked, and what slot group they pass those performances for which they had no vacant slots.
+
+SR has the following Slot Groups:
+*__FC__: This slot group can only accept the performance of the FUMBBL Cup and thus it has zero or one slot. If this group has zero slots defined, that means that there is no reserved slot for the FUMBBL Cup and its performance should be checked in the __MA__ group instead. If there are a slot defined in the ''FC'' group though, then that slot is considered reserved for the FUMBBL Cup performance. This means that if the ''FC'' group is part of the slot rules then not participating in the FUMBBL Cup is a disadvantage.
+
+
+*__MA__: this slot group accepts performances of major tournaments (including the FUMBBL Cup and since [2016-01-25|SR-Report-557], the XFL Masters). If this group get full, performances are redirected to the __R__ group.
+
+*__R__: this slot group accepts performances of any tournaments. If this group gets full, the remaining performances are wasted.
+
+''Table 3'' shows the number of slots for the three groups by time. Note that the sum of slots for the Coach Rankings is 18 while for the Team rankings it is 9. Would all of these slots in the __R__ group would mean that Coach Rankings would be calculated by the best 18 tournament results regardless of the ranks of those tournaments. __FC__ and __MA__ slots are in fact defined for restrictions which means that not taking part in FUMBBL Cup and some majors results a disadvantage in the rankings as those slots then contribute no points to the final ''SR Points''.
+
+{center
+__Table 3.__ Slot Groups
+
+[https://fumbbl.com/i/559351]
+}
+
+%%%
+Note that the current rules are in the last row.  For details regarding the dates of ''Table 3'', see Appendix A.
+
+To get the SR Points of a coach or team, one must know the order of slot allocation. The exact method is explained next.
+
+%%%
+!!SR Points
+
+*__1.__ For a given Report, check which tournaments are included from the [Tournaments|SR-Tournaments] list. The Monday date of the Report must be greater than or equal to the tournament's ''Enter Date'' and less than the ''Exit Date''.
+*__2.__ For every performances of those tournaments calculate the Points according to ''Table 1'' and ''Table 2''.
+*__3.__ Collect every coaches and teams who participated on those tournaments and note them their slot groups and their initial vacant slots according to the Report date and ''Table 3''
+*__4.__ Collect the performances of multiple applications (see ''Wasted Points'' section above) and share the least of the Points equally among them, fractions rounded down. Original Points should get replaced with the proportions.
+*__5.__ Collect the performances with dropouts/forfeits/concessions and sort them by points increasing, then enter date earliest first. Regardless of tournament rank, these points take vacant __R__ slots from the coaches and teams. If there are no more __R__ slot to hold the result, that performance got ''Wasted''.
+*__6.__ Sort the remaining performances by points decreasing then enter date earliest first. Get the ''First Slot Group'' value of the tournament as it is listed in the [Tournaments|SR-Tournaments] page and check for vacant slot for their coach and team in the obtained Slot Group. If that group is full, repeat this process for the next slot group. The order is __FC__ --> __MA__ --> __R__ --> ''Wasted''.
+*__7.__ Sum the points of each coaches and teams which were not ''Wasted'' and sort them. These are the ''SR Points''. Points of coaches and teams are published separately (Coach Rankings and Team Rankings).
+
+%%%
+!!Tiebreakers
+
+There are no tiebreakers in SR Rankings. This means that there could be more than one top coach or team in the same time.
+
+%%%
+!! Appendix A. ''Report Dates of New Slot Group Rules''
+* [2003-09-08|SR-Report-1]: The first ever FUMBBL tournament, the FUMBBL Cup I ended. This is the date of the first SR Report. Until 2004-11-29 no other tounaments were organized and ended but three FUMBBL Cups.
+* [2004-11-29|SR-Report-4]: The first two minor tournaments, SMACK Pro I and SMACK Rookie I ended. This opened the __R__ group with 17 slots for Coach Rankings and 9 slots for Team Rankings. In Team Rankings the __FC__ slot group got closed which made the regular Team Rankings Points the sum of the best 9 performances regardless of tournament rank.  For Coach Rankings, the FUMBBL Cup retained its reserved slot.
+* [2005-05-02|SR-Report-12]: Ulthuan Invitational I, the first non-FC major tournament ended. This opened the __MA__ slot group for Coach Rankings with one slot so UI got a reserved slot for a while. At the same time the __R__ group slots were decreased by one to keep the sum of all kind of Coach Rankings slots at 18. Team Rankings slots were unaffected; a good UI performance took an __R__ slot there.
+* [2005-07-18|SR-Report-18]: Grotty Little Tournament I, another major tournametn ended. For Coach Rankings, the __MA__ slot got increased immediately which resulted a reserved slot for the GLT too for a while. Similarly, the __R__ slots were decreased by one again. Team Ranking slots were unaffected again.
+* [2006-04-17|SR-Report-46]: Warpstone Open I ended with the same effect as Grotty Little Tournament I.
+* [2007-10-08|SR-Report-123]: Lustrian Challenge I ended with same effect.
+* [2010-07-19|SR-Report-268]: Wheel of Chaos I ended. Historically this resulted four official major tournaments in the Ranked division, three in the Blackbox division, plus the FUMBBL Cup being a mixed division tournament. This tournament system changed in 2018 when all tournaments became mixed and three major tournaments were turned off. However, the plenty of majors in both competitive divisions opened the possibility of having one __MA__ slots for them which means that a team which targets a good Team Ranking should take part in at least one major tournament since this time. Coach Rankings slots were unaffected this time as forcing Coach Rankings to have the sixth best major performance (with FC) included would make no sense, especially since those slots would have to get decreased in 2018.

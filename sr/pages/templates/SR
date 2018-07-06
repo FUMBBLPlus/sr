@@ -1,0 +1,36 @@
+!!! OBC Sport SR Rankings
+Updated at {updated}
+<<<
+%%%
+%%%
+The SR Rankings is the OBC Sport's historical objective merit-based method used for determining entry and seeding in all official win-aimed FUMBBL tournaments for both coaches and teams. SR Rankings is based on the [Emirates ATP Rankings|http://www.atpworldtour.com/en/rankings] and its predecessor was maintained by [Sonrises|https://fumbbl.com/~sonrises]. Its current editor in chief is [SzieberthAdam|https://fumbbl.com/~SzieberthAdam].
+
+We hope that the SR Rankings soon will be known as ''The FUMBBL Rankings''.
+For example, when a coach is #1 in the SR Coach Rankings, he will be said to be the ''best FUMBBL Coach''.
+Similarly, a team which is #7 in the SR Team Rankings will be considered a ''Top 10 FUMBBL Team''.
+|||
+%%%
+%%%
+{{center
+[https://fumbbl.com/i/559087]%%%
+}}
+>>>
+%%%
+{{center
+![Rulebook|SR-Rulebook]
+%%%
+
+!![Current Report|SR-Report-{weeknr}]
+
+%%%
+!Reports
+{reports}
+
+%%%
+!Tournaments
+{tournaments}
+
+%%%
+![Forum|https://fumbbl.com/index.php?name=PNphpBB2&file=viewtopic&t=28567]
+}}
+%%%
