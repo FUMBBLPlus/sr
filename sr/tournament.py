@@ -326,7 +326,11 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
     ),
     #srclassval should controlled via self.srclass object
     valattrmapping = {
-        # TODO: maintournamentId (groupdefaultismain)
+        "maintournamentId": [
+            "srdatamaintournamentId",
+            "groupdefaultmaintournamentId",
+        ],
+        "srname": ["srdatasrname", "name"],
         "srclassval": [
             "srdatasrclassval", "_srclassdotval"
         ],
@@ -335,6 +339,12 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
         ],
         "srfsgname": [
             "srdatasrfsgname", "groupdefaultsrfsgname",
+        ],
+        "srenterweekNr": [
+            "srdatasrenterweekNr", "schedulesrenterweekNr",
+        ],
+        "srexitweekNr": [
+            "srdatasrexitweekNr", "srtitlesrexitweekNr",
         ],
     },
     valsettermapping = {"srclassval": False},
@@ -566,11 +576,18 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return self.group.default_tournament_ismain
 
   @property
+  def groupdefaultmaintournamentId(self):
+    if self.groupdefaultismain is True:
+      return 0
+
+  @property
+  @_main_only
   def groupdefaultsrfsgname(self):
     if self.group:
       return self.group.default_tournament_srfsgname
 
   @property
+  @_main_only
   def groupdefaultsrtitle(self):
     if self.group:
       return self.group.default_tournament_srtitle
@@ -594,49 +611,18 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     elif self.main:
       return False
 
-  # TODO! should rely on self.maintournamentId
   @property
   def main(self):
-    if self._maintournamentId is ... and self.srdata:
-      srdataidx = self.SRData.Idx.maintournamentId
-      self._maintournamentId = self.srdata[srdataidx]
-    elif self.group and self.group.default_tournament_ismain:
-      self._maintournamentId = 0
-    if self._maintournamentId in {0, self.id}:
-      # For visual and compactness, the TOURNAMENTS.JSON file
-      # has zeros as main tournament IDs for main tournaments.
+    if self.maintournamentId in {0, self.id}:
       return self
-      # Returning self avoids infinite recursion as there is a
-      # self.main access in __init__().
-    elif self._maintournamentId not in (..., None):
-      return Tournament(self._maintournamentId)
+    elif self.maintournamentId:
+      return Tournament(self.maintournamentId)
   @main.setter
-  def main(self, main: "Tournament"):
-    previous_main = self.main
-    if main is None:  # unknown
-      self._maintournamentId = main
-    elif hasattr(main, "id"):
-      self._maintournamentId = main.id
-    else:  # setter also accepts an ID as parameter
-      self._maintournamentId = int(main)
-    if self._maintournamentId == self.id:
-      self._maintournamentId = 0  # explained in the getter
-    elif previous_main and previous_main is not self:
-        previous_main._qualifiers.remove(self)
-    if self.ismain is False:
-      self.main._qualifiers.add(self)
-
-  # TODO! remove and let the decorated peroperty with an extra
-  # valattr.
-  @property
-  def maintournamentId(self):
-    if self.ismain:
-      return 0  # explained in self.main getter
-    elif self.main:
-      return self.main.id
-  @maintournamentId.setter
-  def maintournamentId(self, maintournamentId):
-    self.main = maintournamentId
+  def main(self, maintournament):
+    if maintournament is not None:
+      self.maintournamentId = maintournament.id
+    else:
+      self.maintournamentId = None
 
   @property
   def name(self):
@@ -654,68 +640,17 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return Schedule(self.id)
 
   @property
+  @_main_only
+  def schedulesrenterweekNr(self):
+    srfinished = self.schedule.srfinished
+    if srfinished:
+      return sr.time.weekNr(srfinished) + 1
+      # Tournament enters the system the next week it
+      # finishes, hence the plus one.
+
+  @property
   def srclass(self):
     return self.SRClass(self)
-
-  # TODO! remove and let the decorated peroperty with an extra
-  # valattr.
-  @property
-  @_main_only
-  def srenterweekNr(self):
-    if self._srenterweekNr is ... and self.srdata:
-      srdataidx = self.SRData.Idx.srenterweekNr
-      self._srenterweekNr = self.srdata[srdataidx]
-    if self._srenterweekNr in (None, ...):
-      srfinished = self.schedule.srfinished
-      if srfinished:
-        self._srenterweekNr = sr.time.weekNr(srfinished) + 1
-        # Tournament enters the system the next week it
-        # finishes, hence the plus one.
-    if self._srenterweekNr is not ...:
-      return self._srenterweekNr
-  @srenterweekNr.setter
-  @_main_only
-  def srenterweekNr(self, srenterweekNr: int):
-    if srenterweekNr not in (None, ...):
-      srenterweekNr = int(srenterweekNr)
-    self._srenterweekNr = srenterweekNr
-
-  # TODO! remove and let the decorated peroperty with an extra
-  # valattr.
-  @property
-  @_main_only
-  def srexitweekNr(self):
-    if self._srexitweekNr is ... and self.srdata:
-      srdataidx = self.SRData.Idx.srexitweekNr
-      self._srexitweekNr = self.srdata[srdataidx]
-    if self._srexitweekNr in (None, ...):
-      srenterweekNr = self.srenterweekNr
-      if srenterweekNr is not None:
-        srtitle = self.srtitle
-        if not srtitle:
-          remains = sr.settings["tournament.normal.remains"]
-          self._srexitweekNr = srenterweekNr + remains
-        else:
-          remains = sr.settings["tournament.srtitle.remains"]
-          prev, next_ = self.srsametitleprevnext
-          if next_:
-            next_srenterweekNr = next_.srenterweekNr
-            if next_srenterweekNr:
-              self._srexitweekNr = min(
-                  next_srenterweekNr, srenterweekNr + remains
-              )
-          else:
-            current_weekNr = sr.time.current_weekNr()
-            if srenterweekNr + remains <= current_weekNr:
-              self._srexitweekNr
-    if self._srexitweekNr is not ...:
-      return self._srexitweekNr
-  @srexitweekNr.setter
-  @_main_only
-  def srexitweekNr(self, srexitweekNr: int):
-    if srexitweekNr not in (None, ...):
-      srexitweekNr = int(srexitweekNr)
-    self._srexitweekNr = srexitweekNr
 
   @property
   @_main_only
@@ -737,21 +672,6 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         else:
           remains = sr.settings["tournament.srtitle.remains"]
         return srenterweekNr + remains
-
-  # TODO! remove and let the decorated peroperty with an extra
-  # valattr.
-  @property
-  def srname(self):
-    if not self.srnameisset and self.srdata:
-      srdataidx = self.SRData.Idx.srname
-      self._srname = self.srdata[srdataidx]
-    if self.srnameisset:
-      return self._srname
-    else:
-      return self.name
-  @srname.setter
-  def srname(self, name: str):
-    self._srname = str(name).upper()
 
   @property
   def srnameisset(self):
@@ -797,22 +717,25 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         break
     return tuple(result)
 
-  # TODO! remove and let the decorated peroperty with an extra
-  # valattr.
   @property
   @_main_only
-  def srtitle(self):
-    if self._srtitle is ... and self.srdata:
-      srdataidx = self.SRData.Idx.srtitle
-      self._srtitle = self.srdata[srdataidx]
-    if self._srtitle in (None, ...) and self.group:
-      self._srtitle = self.group.default_tournament_srtitle
-    if self._srtitle is not ...:
-      return self._srtitle
-  @srtitle.setter
-  @_main_only
-  def srtitle(self, title: str):
-    self._srtitle = str(title)
+  def srtitlesrexitweekNr(self):
+    srenterweekNr = self.srenterweekNr
+    if srenterweekNr is not None:
+      srtitle = self.srtitle
+      if not srtitle:
+        remains = sr.settings["tournament.normal.remains"]
+        return srenterweekNr + remains
+      else:
+        remains = sr.settings["tournament.srtitle.remains"]
+        latestsrexitweekNr = srenterweekNr + remains
+        prev, next_ = self.srsametitleprevnext
+        if next_:
+          next_srenterweekNr = next_.srenterweekNr
+          if next_srenterweekNr:
+            return min(next_srenterweekNr, latestsrexitweekNr)
+        elif latestsrexitweekNr <= sr.time.current_weekNr():
+            return latestsrexitweekNr
 
   @property
   def status(self):
@@ -832,11 +755,22 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
           team.name = w["name"]
         return team
 
+  def _maintournamentId_fgetvalcast(self, val):
+    if val is not None:
+      val = int(val)
+      if val in {0, self.id}:
+        return 0
+      else:
+        return val
+
+  _maintournamentId_beforefset = _maintournamentId_fgetvalcast
+
   def _srclassattrs(self):
     srclassattrs = list(self.SRClass.SRData.Idx.__members__)
     srclassattrs.append("iselim")
     return srclassattrs
 
+  _srname_beforefset = lambda self, val: str(val).upper()
 
 
 

@@ -126,6 +126,7 @@ def idkey(cls, attrname="id", ftypecast=int):
 
 
 
+
 def srdata(name, colnames,
     valattrmapping=None,
     valsettermapping=None,
@@ -175,48 +176,7 @@ def srdata(name, colnames,
     def method(self):
       if self.srdata:
         return self.srdata[self.SRData.Idx[colname]]
-      else:
-        return ...
     return method
-
-  def valfgetfactory(colname, valattrs=None):
-    valattrs = valattrs or []
-    def fget(self):
-      val = getattr(self, f'_{colname}')
-      print(["fget", colname, val])
-      for valattr in valattrs:
-        if val is ...:
-          val = getattr(self, valattr)
-          if val is not ...:
-            break
-      else:
-        if val is ...:
-          val = None
-      if hasattr(self, f'_{colname}_fgetvalcast'):
-        val = getattr(self, f'_{colname}_fgetvalcast')(val)
-      elif hasattr(self, "_fgetvalcast"):
-        val = getattr(self, "_fgetvalcast")(colname, val)
-      setattr(self, f'_{colname}', val)
-      return getattr(self, f'_{colname}')
-    return fget
-  def valfsetfactory(colname):
-    def fset(self, val):
-      oldval = getattr(self, colname)
-      if hasattr(self, f'_{colname}_beforefset'):
-        val = getattr(self, f'_{colname}_beforefset')(val)
-      elif hasattr(self, "_beforefset"):
-        val = getattr(self, "_beforefset")(colname, val)
-      setattr(self, f'_{colname}', val)
-      newval = getattr(self, colname)
-      if hasattr(self, f'_{colname}_afterfset'):
-        getattr(self, f'_{colname}_afterfset')(newval, oldval)
-      elif hasattr(self, "_afterfset"):
-        getattr(self, "_afterfset")(colname, newval, oldval)
-    return fset
-  def valfdelfactory(colname):
-    def fdel(self):
-      setattr(self, f'_{colname}', ...)
-    return fdel
 
   property_attr = {
     "srdata": (srdata,),
@@ -253,11 +213,13 @@ def srdata(name, colnames,
       if not hasattr(cls, colname):
         propertyattrs = [None] * 3
         valattrs = valattrmapping.get(colname, [a0])
-        propertyattrs[0] = valfgetfactory(colname, valattrs)
+        propertyattrs[0] = srdatavalfgetfactory(
+            colname, valattrs
+        )
         if valsettermapping.get(colname, True):
-          propertyattrs[1] = valfsetfactory(colname)
+          propertyattrs[1] = srdatavalfsetfactory(colname)
         if valdeletermapping.get(colname, True):
-          propertyattrs[2] = valfdelfactory(colname)
+          propertyattrs[2] = srdatavalfdelfactory(colname)
         setattr(cls, colname, property(*propertyattrs))
       a1 = f'{colname}isset'
       if not hasattr(cls, a1):
@@ -267,10 +229,53 @@ def srdata(name, colnames,
     return cls
   return real_decorator
 
+def srdatavalfgetfactory(colname, valattrs=None):
+  valattrs = valattrs or []
+  def fget(self):
+    val = getattr(self, f'_{colname}')
+    for valattr in valattrs:
+      if val in {..., None}:
+        if callable(valattr):
+          val = valattr(self)
+        else:
+          val = getattr(self, valattr)
+        if val not in {..., None}:
+          break
+    else:
+      if val is ...:
+        val = None
+    if hasattr(self, f'_{colname}_fgetvalcast'):
+      val = getattr(self, f'_{colname}_fgetvalcast')(val)
+    elif hasattr(self, "_fgetvalcast"):
+      val = getattr(self, "_fgetvalcast")(colname, val)
+    setattr(self, f'_{colname}', val)
+    return getattr(self, f'_{colname}')
+  return fget
+def srdatavalfsetfactory(colname):
+  def fset(self, val):
+    oldval = getattr(self, colname)
+    if hasattr(self, f'_{colname}_beforefset'):
+      val = getattr(self, f'_{colname}_beforefset')(val)
+    elif hasattr(self, "_beforefset"):
+      val = getattr(self, "_beforefset")(colname, val)
+    setattr(self, f'_{colname}', val)
+    newval = getattr(self, colname)
+    if hasattr(self, f'_{colname}_afterfset'):
+      getattr(self, f'_{colname}_afterfset')(newval, oldval)
+    elif hasattr(self, "_afterfset"):
+      getattr(self, "_afterfset")(colname, newval, oldval)
+  return fset
+def srdatavalfdelfactory(colname):
+  def fdel(self):
+    setattr(self, f'_{colname}', ...)
+  return fdel
+
+
+
 
 def default_srdata_typecast(cls):
   def _cast(self, colname, val):
-    if val not in (None, ...):
+    if val not in {None, ...}:
       if "Id" in colname or "Nr" in colname:
         return int(val)
       else:
