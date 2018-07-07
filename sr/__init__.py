@@ -20,5 +20,4 @@ from . import team
 from . import tournament
 
 # pages
-from . import pages as _pages
-pages = _pages.pages
+from . import pages

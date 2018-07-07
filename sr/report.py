@@ -8,6 +8,10 @@ class Report(metaclass=sr.helper.InstanceRepeater):
     pass
 
   @property
+  def date(self):
+    return sr.time.firstdate(self.weekNr)
+
+  @property
   def enters(self):
     return sr.tournament.enters(self.weekNr)
 
@@ -22,6 +26,10 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   @property
   def tournaments(self):
     return sr.tournament.ofweekNr(self.weekNr)
+
+  @property
+  def fumbblyear(self):
+    return sr.time.fumbblyear(self.weekNr)
 
 
 

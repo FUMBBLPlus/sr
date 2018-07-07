@@ -4,15 +4,16 @@ from . import helper
 
 
 class WikiPage(helper.WikiPage):
-  name = "SR"
+  NAME = "SR"
+  name = NAME
 
   def content(self, updated=None):
     kwargs = {}
     if not updated:
       updated = sr.time.now()
     if hasattr(updated, "strftime"):
-      timefmt = "%Y-%m-%d %H:%M"
-      updated = updated.strftime(timefmt)
+      tfmt = f'{sr.time.ISO_DATE_FMT} {sr.time.ISO_TIME_FMT_M}'
+      updated = updated.strftime(tfmt)
     kwargs["updated"] = updated
     kwargs["weeknr"] = sr.time.current_weekNr()
     kwargs["reports"] = " | ".join(

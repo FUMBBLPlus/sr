@@ -819,6 +819,15 @@ def knownlasttimer(weekNr):
   return exits(weekNr + 1)
 
 
+def lowest_unclosed_weeknr():
+  return min([
+      T.srenterweekNr
+      for T in all()
+      if t.ismain
+      and t.srenterweekNr
+      and t.srexitweekNr is None
+  ])
+
 def main_unknown():
   return {T for T in all() if T.main is None}
 
@@ -842,6 +851,27 @@ def ofweekNr(weekNr):
           T.main.srenterweekNr, T.main.srlatestexitweekNr
       )
   }
+
+
+def sort(tournaments, reverse=False):
+  slot_key = {
+      "FC": 0, "MA": 1, "R": 2, None: 3, "W": 4, "NE": 5,
+  }
+  def key(t):
+    sign = 1 - 2 * reverse  # 1 normally and -1 if reverse
+    return [
+      sign * (t.main.srenterweekNr is None),
+      sign * (
+          0 if t.main.srenterweekNr is None
+          else t.main.srenterweekNr
+      ),
+      (t.rank == Tournament.SRClass.MINOR),
+      slot_key[t.main.srfsgname],
+      t.main.srname,
+      -t.level,
+      t.id,
+    ]
+  return sorted(tournaments, key=key)
 
 
 def srtitles():

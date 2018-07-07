@@ -6,13 +6,14 @@ import pytz
 import sr
 
 
-ZONE = 'Europe/Stockholm'
+ZONE = "Europe/Stockholm"
 UTC = pytz.utc
 TZ = pytz.timezone(ZONE)
-ISO_DATE_FMT = '%Y-%m-%d'
-ISO_TIME_FMT_S = '%H:%M:%S'
-ISO_FMT_F = '%Y-%m-%dT%H:%M:%S.%f'
-S_DELIM_ISO_FMT_S = ISO_DATE_FMT + ' ' + ISO_TIME_FMT_S
+ISO_DATE_FMT = "%Y-%m-%d"
+ISO_TIME_FMT_M = "%H:%M"
+ISO_TIME_FMT_S = ISO_TIME_FMT_M + ":%S"
+ISO_FMT_F = "%Y-%m-%dT%H:%M:%S.%f"
+S_DELIM_ISO_FMT_S = ISO_DATE_FMT + " " + ISO_TIME_FMT_S
 
 ZERODATE = datetime.date(2002, 12, 30)
 ZEROTIME = TZ.localize(datetime.datetime(2002, 12, 30, 8, 00))
@@ -58,7 +59,7 @@ def strptime(s, fmt=None, *, is_dst=False):
       else:
         break
     if dt is None:
-      raise ValueError('invalid datetime string')
+      raise ValueError("invalid datetime string")
   else:
     dt = datetime.datetime.strptime(s, fmt)
   if not tz_aware(dt):
@@ -76,7 +77,7 @@ def tz_aware(datetimeobj):
 
 def weekNr(datetimeobj):
   dt = datetimeobj
-  if hasattr(dt, 'microsecond'):
+  if hasattr(dt, "microsecond"):
     days = (dt - ZEROTIME).days
   else:
     days = (dt - ZERODATE).days
