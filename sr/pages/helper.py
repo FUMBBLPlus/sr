@@ -88,33 +88,65 @@ del _ftypecast
 def reporttext(report):
   return f'[#{report.nr}|SR-Report-{report.nr}]'
 
-def tournamentnametext(tournament, boldface_titled=False):
+def tournamentnametext(tournament, boldface_titled=True):
   T = tournament
-  text = f'[{T.srname}|{t.http}]'
-  if boldface_titled:
+  text = f'[{T.srname}|{T.http}]'
+  if boldface_titled and T.ismain and T.srtitle:
     text = f'__{text}__'
   return text
 
+def tournamentnteamstext(tournament):
+  if tournament.iselim:
+    return str(tournament.srnteams)
+  return " "  # space requires to avoid table cell joins
+
+def tournamentfsgnametext(tournament):
+  if tournament.ismain and tournament.srfsgname:
+    return tournament.srfsgname
+  return " "
+
 def tournamententerdatetext(tournament):
   T = tournament
+  if not T.ismain:
+    return " "
   if T.main.srenterweekNr is not None:
     report = sr.report.Report(T.main.srenterweekNr)
     datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
     return f'[{datestr}|SR-Report-{report.nr}]'
   else:
-    return " "  # space requires to avoid table cell joins
+    return " "
+
+def tournamentexitdatetext(tournament):
+  T = tournament
+  if not T.ismain:
+    return " "
+  if T.main.srexitweekNr is not None:
+    w = T.main.srexitweekNr
+    known = True
+  elif T.main.srlatestexitweekNr is not None:
+    w = T.main.srlatestexitweekNr
+    known = False
+  else:
+    return " "
+  if w in sr.report.weekNrs():
+    assert known
+    report = sr.report.Report(w)
+    datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
+    return f'[{datestr}|SR-Report-{report.nr}]'
+  else:
+    dateobj = sr.time.firstdate(w)
+    datestr = dateobj.strftime(sr.time.ISO_DATE_FMT)
+    if known:
+      return datestr
+    else:
+      return f'({datestr})'
 
 
 
-
-def table(listoflist,
-    align=None,
-    header=None,
-    header_align=None,
-  ):
+def table(rows, align=None, header=None, header_align=None):
   if align is None:
-    if listoflist:
-      columns = max(len(row) for row in listoflist)
+    if rows:
+      columns = max(len(row) for row in rows)
       align = 'L' * columns
   if header is not None and header_align is None:
     header_columns = len(header)
@@ -126,11 +158,11 @@ def table(listoflist,
   header_align_strs = [align_trans[s] for s in header_align]
   row_str_gen = (
       ''.join((
-          ''.join(t)
+          ''.join([str(e) for e in t])
           for t in
           itertools.zip_longest(align_strs, row, fillvalue='')
       ))
-      for row in listoflist
+      for row in rows
   )
   if header:
     header_str = ''.join((

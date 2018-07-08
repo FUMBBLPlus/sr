@@ -16,3 +16,43 @@ class WikiPage(helper.FUMBBLYearWikiPage):
         "OBC Sport SR Rankings Tournaments of FUMBBL Year "
         f'{roman.to_roman(self.fumbblyear)}'
     )
+
+  @property
+  def tournaments(self):
+    return sr.tournament.sort(
+        sr.tournament.offumbblyear(self.fumbblyear),
+        reverse=True,
+    )
+
+  @property
+  def table(self):
+    header=[
+        "Name",
+        "Rnk",
+        "Lvl",
+        "Fmt",
+        "Tms",
+        "Points",
+        "FSG",
+        "Enter Date",
+        "Exit Date",
+    ]
+    rows = list(
+        [
+            helper.tournamentnametext(T),
+            T.rank,
+            T.level,
+            T.srformatchar,
+            helper.tournamentnteamstext(T),
+            T.srpointsstr,
+            helper.tournamentfsgnametext(T),
+            helper.tournamententerdatetext(T),
+            helper.tournamentexitdatetext(T),
+        ]
+        for T in self.tournaments
+    )
+    align="LCCCCLCCC"
+    return helper.table(rows, align, header)
+
+  def content(self):
+    return super().content(title=self.title, table=self.table)

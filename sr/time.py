@@ -23,8 +23,28 @@ ONEDAY = datetime.timedelta(1)
 ONEWEEK = datetime.timedelta(7)
 
 
+def current_fumbblyear():
+  return fumbblyear(current_weekNr())
+
 def current_weekNr():
   return weekNr(now())
+
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def firstdate(weekNr):
+  dt = firsttime(weekNr)
+  return datetime.date(dt.year, dt.month, dt.day)
+
+
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def firsttime(weekNr):
+  return ZEROTIME + weekNr * ONEWEEK
+
+
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def fumbblyear(weekNr):
+  for y, r in fumbblyears().items():
+    if weekNr in r:
+      return y
 
 
 _fumbblyears = ...
@@ -42,6 +62,37 @@ def fumbblyears(*, rebuild=False):
       result[y] = range(start_weekNr, 999999999)
     _fumbblyears = result
   return _fumbblyears
+
+
+def fumbblyears_unfinalized():
+  w = lowest_enterweekNr_of_unexited()
+  return sorted(
+      y for y, r in fumbblyears().items()
+      if w < r.start or w in r
+  )
+
+
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def lastdate(weekNr):
+  return  firstdate(weekNr) + ONEWEEK - ONEDAY
+
+
+@sr.helper.default_from_func("weekNr", current_weekNr)
+def lasttime(weekNr):
+  return  firsttime(weekNr) + ONEWEEK - MICROSECOND
+
+
+def lowest_enterweekNr_of_unexited():
+  return min([
+      T.srenterweekNr
+      for T in sr.tournament.added()
+      if T.ismain
+      and T.srenterweekNr
+      and (
+          T.srexitweekNr is None
+          or T.srexitweekNr not in sr.report.weekNrs()
+      )
+  ])
 
 
 def now():
@@ -82,31 +133,3 @@ def weekNr(datetimeobj):
   else:
     days = (dt - ZERODATE).days
   return math.floor(days / 7)
-
-
-@sr.helper.default_from_func("weekNr", current_weekNr)
-def firstdate(weekNr):
-  dt = firsttime(weekNr)
-  return datetime.date(dt.year, dt.month, dt.day)
-
-
-@sr.helper.default_from_func("weekNr", current_weekNr)
-def firsttime(weekNr):
-  return ZEROTIME + weekNr * ONEWEEK
-
-
-@sr.helper.default_from_func("weekNr", current_weekNr)
-def fumbblyear(weekNr):
-  for y, r in fumbblyears().items():
-    if weekNr in r:
-      return y
-
-
-@sr.helper.default_from_func("weekNr", current_weekNr)
-def lastdate(weekNr):
-  return  firstdate(weekNr) + ONEWEEK - ONEDAY
-
-
-@sr.helper.default_from_func("weekNr", current_weekNr)
-def lasttime(weekNr):
-  return  firsttime(weekNr) + ONEWEEK - MICROSECOND

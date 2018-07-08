@@ -21,7 +21,7 @@ class Report(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def nr(self):
-    return weekNrs().index(self.weekNr)
+    return weekNrs().index(self.weekNr) + 1
 
   @property
   def tournaments(self):

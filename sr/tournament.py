@@ -426,13 +426,18 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return value_
     @classmethod
     def _srnteams_fgetvalcast(cls, value):
+      if isinstance(value, str):
+        for c in "-–":
+          if c in value:
+            lower, upper = [int(x) for x in value.split(c)]
+            return range(lower, upper + 1)
       return int(value)
     @classmethod
     def _srnteams_beforefset(cls, value):
-      value_ = int(value)
-      if value_ < 2:
-        raise ValueError(f'invalid srnteams: {value}')
-      return value_
+      if hasattr(value, "start") and hasattr(value, "stop"):
+        return f'{int(value.start)}-{int(value.stop) - 1}'
+      else:
+        return srt(int(value))
 
     @classmethod
     def join(cls, parts):
@@ -458,6 +463,8 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         else:
           if hasattr(cls, f'_{colname}_fgetvalcast'):
             v = getattr(cls, f'_{colname}_fgetvalcast')(v)
+          elif hasattr(cls, "_fgetvalcast"):
+            v = getattr(cls, "_fgetvalcast")(colname, v)
           result[idx] = v
       return result
 
@@ -482,11 +489,17 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       return d[tournament_format]
 
     @property
-    def iselim(self):
-      return bool(self.FORMAT_CHARS.index(self.srformatchar))
-    @iselim.setter
-    def iselim(self, value):
-      self.srformatchar = self.FORMAT_CHARS[bool(value)]
+    def srpointsstr(self):
+      m = list(self.srnewdata)  # self.srnewdata is tuple
+      for pclassval, pstr in sr.data["points"].items():
+        p = self.split(pclassval)  # p is list
+        if p == m:
+          return pstr
+        i = self.SRData.Idx.srnteams
+        if p[:i] == m[:i] and m[i] in p[i]:
+          return pstr
+      errmsg = f'points not defined for class: {self.val}'
+      raise NotImplementedError(errmsg)
 
     @property
     def groupdefaultlevel(self):
@@ -511,6 +524,20 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       val = self.tournament.srdatasrclassval
       if val not in (None, ...):
         return self.split(val)
+
+    @property
+    def srnewdata(self):
+      attrs = tuple(self.SRData.Idx.__members__)
+      if not self.iselim:
+        attrs = attrs[:self.SRData.Idx.srnteams - len(attrs)]
+      return tuple(getattr(self, a) for a in attrs)
+
+    @property
+    def iselim(self):
+      return bool(self.FORMAT_CHARS.index(self.srformatchar))
+    @iselim.setter
+    def iselim(self, value):
+      self.srformatchar = self.FORMAT_CHARS[bool(value)]
 
     @property
     def val(self):
@@ -768,6 +795,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   def _srclassattrs(self):
     srclassattrs = list(self.SRClass.SRData.Idx.__members__)
     srclassattrs.append("iselim")
+    srclassattrs.append("srpointsstr")
     return srclassattrs
 
   _srname_beforefset = lambda self, val: str(val).upper()
@@ -792,7 +820,7 @@ def changed():
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def enters(weekNr):
   return {
-      T for T in all()
+      T for T in added()
       if T.main.srenterweekNr is not None
       and weekNr == T.main.srenterweekNr
   }
@@ -801,7 +829,7 @@ def enters(weekNr):
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def exits(weekNr):
   return {
-      T for T in all()
+      T for T in added()
       if T.main.srlatestexitweekNr is not None
       and weekNr == T.main.srlatestexitweekNr
   }
@@ -809,7 +837,7 @@ def exits(weekNr):
 
 def fumbblcups():
   return sorted({
-      T for T in all() if T.ismain
+      T for T in added() if T.ismain
       and T.srfsg is sr.slot.SlotGroup("FC")
   })
 
@@ -818,15 +846,6 @@ def fumbblcups():
 def knownlasttimer(weekNr):
   return exits(weekNr + 1)
 
-
-def lowest_unclosed_weeknr():
-  return min([
-      T.srenterweekNr
-      for T in all()
-      if t.ismain
-      and t.srenterweekNr
-      and t.srexitweekNr is None
-  ])
 
 def main_unknown():
   return {T for T in all() if T.main is None}
@@ -844,7 +863,7 @@ def observed():
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def ofweekNr(weekNr):
   return {
-      T for T in all()
+      T for T in added()
       if T.main.srenterweekNr is not None
       and T.main.srlatestexitweekNr is not None
       and weekNr in range(
@@ -852,6 +871,16 @@ def ofweekNr(weekNr):
       )
   }
 
+@sr.helper.default_from_func(
+    "fumbblyear", sr.time.current_fumbblyear
+)
+def offumbblyear(fumbblyear):
+  weekNr_range = sr.time.fumbblyears()[fumbblyear]
+  return {
+      T for T in added()
+      if T.main.srenterweekNr is not None
+      and T.main.srenterweekNr in weekNr_range
+  }
 
 def sort(tournaments, reverse=False):
   slot_key = {
