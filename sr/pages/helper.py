@@ -88,11 +88,17 @@ del _ftypecast
 def reporttext(report):
   return f'[#{report.nr}|SR-Report-{report.nr}]'
 
-def tournamentnametext(tournament, boldface_titled=True):
+def tournamentnametext(
+    tournament,
+    boldface_titled=True,
+    italic_notinyear=True,
+):
   T = tournament
   text = f'[{T.srname}|{T.http}]'
   if boldface_titled and T.ismain and T.srtitle:
     text = f'__{text}__'
+  if italic_notinyear and T.ismain and T.fumbblyear_in is None:
+    text = f'\'\'{text}\'\''
   return text
 
 def tournamentnteamstext(tournament):
@@ -123,10 +129,15 @@ def tournamentexitdatetext(tournament):
   if T.main.srexitweekNr is not None:
     w = T.main.srexitweekNr
     known = True
-  elif T.main.srlatestexitweekNr is not None:
-    w = T.main.srlatestexitweekNr
-    known = False
   else:
+    known = False
+    if T.main.srtitle:
+      w = T.main.srlatestexitweekNr
+      fstr = '.. {}'
+    else:
+      w = T.main.srearliestexitweekNr
+      fstr = '{} ..'
+  if w is None:
     return " "
   if w in sr.report.weekNrs():
     assert known
@@ -139,7 +150,8 @@ def tournamentexitdatetext(tournament):
     if known:
       return datestr
     else:
-      return f'({datestr})'
+      return fstr.format(datestr)
+
 
 
 

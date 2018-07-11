@@ -4,12 +4,14 @@ SR version 2.0
 %%%
 %%%
 
-__The ''SR Rankings'' is the mathematical method of ranking FUMBBL teams and coaches on a calendar-year basis based on their performances on official competitive win-aimed tournaments.__
+__The ''SR Rankings'' is the mathematical method of ranking FUMBBL teams and coaches based on their performances on official competitive win-aimed tournaments.__
 
 %%%
 !!Reports and Tournaments
 
-The ''SR Rankings'' are published in ''Reports'' after each __Monday 8:00 AM__ (server time) when there are at least one tournament entered to or exited from the system. Major qualifiers move along with their main tournament but XFL Qualifiers are handled separately. A tournament enters into the system in the next ''Report'' after it finishes and remains there for 52 calendar weeks by default. The following tournaments are exceptional as they may get replaced in the system by the next tournament of the same kind. If that does not happen, points earned on these tournaments remain in the system for 78 calendar weeks:
+The ''SR Rankings'' are published in ''Reports'' after each __Monday 8:00 AM__ (server time) when there are at least one tournament entered to or exited from the system. ''Reports'' are grouped by ''FUMBBL Years''. A ''FUMBBL Year'' ends when a new FUMBBL Cup result enters the system and the previous FUMBBL Cup result exits. Year-end standings deserve more attention.
+
+A regular tournament enters into the system in the next ''Report'' after it finishes and remains there for 52 calendar weeks by default or at least until its year ends. The tournaments below are exceptional as they may get replaced in the system by the next tournament of the same kind. If that does not happen, points earned on these tournaments remain in the system for 78 calendar weeks.
 
 *Ball Brawl
 *Black Cup
@@ -23,6 +25,12 @@ The ''SR Rankings'' are published in ''Reports'' after each __Monday 8:00 AM__ (
 *Wheel of Chaos
 *Xenophobes' Federated Leagues Qualifiers (each rosters separately)
 *Xenophobes' Federated Leagues Masters
+
+Major qualifiers move along with their main tournament. XFL Qualifiers are exceptional and are treated as Minor tournaments.
+
+The system ensures that all regular tournaments are included in either of the year end ''Reports''. As the special tournaments provide what could be considered as a title, the system ensures that in a given time only one champion exist per these tournaments. In rare cases this could make some results excluded from the year end reports which mostly threatens the XFL Qualifiers which are drawn in a random order for each season.
+
+Special tournaments are usually shown with __bold__ while thise which are not part of the year end rankings are shown with ''__bolditalic__'' typeface.
 
 %%%
 !!Tournament Points
@@ -39,7 +47,7 @@ __Number of Teams__: This is the number of non-filler teams in round 1 of the sc
 
 __Performance__: Performances are handled differently for the two formats. Concessions, forfeits, and dropouts are punished. All tournaments yield a small amount of initial points even if the participant loses all matches. This is not only an incentive for participation but also to play the match without conceding as a first round forfeit/dropout/concession takes away these points and result a zero point performance. On top of that, these performances have priority over others in taking slots and may easily displace better performances (see ''SR Points'' section below.)
 
-*For ''Elimination'' tournaments, the points are determined by the highest round's valid win by match. A dropout/forfeit/concession invalidates a win as a punishment. Consider every participant as having a free initial win which yields the initial points. But also this virtual win can get invalidated and end up with zero points if one does not play the first match or concedes there.
+*For ''Elimination'' tournaments, the points are determined by the highest round's valid win by match. A dropout/forfeit/concession invalidates a win as a punishment. Consider every participant as having a free initial win which yields the initial points. But also this virtual win can get invalidated and end up with zero points if one does not play the first match or concedes there. If a tournament is won by having a bye in the last round then despite no match was played, the winner gets an extra ''(Winner-F)/2'' number of points rounded down.
 
 {center
 __Table 1.__ Points Table of Elimination Format Tournaments
@@ -55,6 +63,9 @@ __Table 2.__ Points Table of Non-Elimination Format Tournaments
 
 [https://fumbbl.com/i/561323]
 }
+
+%%%
+In the Tournaments pages both the tournament categories and the points are shown in solid forms. For examlpe __E/MI/1/17-24__ means an ''Elimination'', ''Minor'', level 1 tournament with 17 to 24 teams while __N/QU/1__ means a ''Non-elimination'' level 1 ''Major Qualifier''. The points of these type of tournaments are shown as __13 * 17-34-68-114-190__ and __4 * 15/8/1 * 15__ respectively.
 
 %%%
 !!Wasted Points
@@ -110,7 +121,7 @@ To get the SR Points of a coach or team, one must know the order of slot allocat
 %%%
 !!Tiebreakers
 
-There are no tiebreakers in SR Rankings. This means that there could be more than one top coach or team in the same time.
+As tiebreakers, points are compared in decreasion order. If all points are equal then we apply no more tiebreakers.
 
 %%%
 !! Appendix A. ''Report Dates of New Slot Group Rules''

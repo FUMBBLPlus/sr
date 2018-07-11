@@ -1,6 +1,9 @@
 {
 	"sr.sr-data.path": null,
 	"sr.sr-pages.path": null,
-	"sr.tournament.normal.remains": 52,
-	"sr.tournament.srtitle.remains": 78
+	"sr.time.maxyearweeks": 78,
+	"sr.tournament.normal.maxremains": 78,
+	"sr.tournament.normal.minremains": 52,
+	"sr.tournament.srtitle.maxremains": 78,
+	"sr.tournament.srtitle.minremains": 1
 }

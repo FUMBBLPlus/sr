@@ -1,3 +1,4 @@
+import collections
 import datetime
 import math
 
@@ -50,16 +51,27 @@ def fumbblyear(weekNr):
 _fumbblyears = ...
 def fumbblyears(*, rebuild=False):
   global _fumbblyears
+  maxyearweeks = sr.settings["time.maxyearweeks"]
   if _fumbblyears is ... or rebuild:
     result = {}
-    for y, T in enumerate(sr.tournament.fumbblcups(), 2):
-      start_weekNr = T.srenterweekNr + 1
-      stop_weekNr = T.srlatestexitweekNr + 1
-      if y == 2:
-        result[y - 1] = range(0, start_weekNr)
+    y = 1
+    d = collections.deque(sr.tournament.fumbblcups())
+    while d:
+      T = d.popleft()
+      if y == 1:
+        stop_weekNr = T.srenterweekNr
+      start_weekNr = stop_weekNr
+      stop_weekNr = T.srenterweekNr + 1
+      assert start_weekNr < stop_weekNr
+      if maxyearweeks < stop_weekNr - start_weekNr:
+        stop_weekNr = start_weekNr + maxyearweeks
+        d.appendleft(T)
       result[y] = range(start_weekNr, stop_weekNr)
+      y += 1
     else:
-      result[y] = range(start_weekNr, 999999999)
+      start_weekNr = stop_weekNr
+      stop_weekNr = start_weekNr + maxyearweeks
+      result[y] = range(start_weekNr, stop_weekNr)
     _fumbblyears = result
   return _fumbblyears
 

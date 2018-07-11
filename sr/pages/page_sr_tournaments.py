@@ -56,3 +56,16 @@ class WikiPage(helper.FUMBBLYearWikiPage):
 
   def content(self):
     return super().content(title=self.title, table=self.table)
+
+
+def all():
+  return [
+      sr.pages.page["SR-Tournaments-Y__"].WikiPage(y)
+      for y in list(sr.time.fumbblyears())
+  ]
+
+
+def toupdate():
+  w = sr.time.lowest_enterweekNr_of_unexited()
+  y = sr.time.fumbblyear(w)
+  return [wp for wp in all() if y <= wp.fumbblyear]

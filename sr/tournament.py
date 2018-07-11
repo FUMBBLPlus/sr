@@ -593,6 +593,23 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return self.srclass.val
 
   @property
+  def fumbblyear(self):
+    if self.main.srenterweekNr is not None:
+      return sr.time.fumbblyear(self.main.srenterweekNr)
+    else:
+      return list(sr.time.fumbblyears())[-1]
+
+  @property
+  def fumbblyear_in(self):
+    y = self.fumbblyear
+    fumbblyear_weekNrs = sr.time.fumbblyears()[y]
+    exitweekNr = self.main.srexitweekNr
+    if exitweekNr is not None:
+      if exitweekNr in fumbblyear_weekNrs:
+        return None
+    return y
+
+  @property
   def group(self):
     if self.groupId is not None:
       return sr.group.Group(self.groupId)
@@ -681,6 +698,21 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   @_main_only
+  def srearliestexitweekNr(self):
+    if self.srexitweekNr is not None:
+      return self.srexitweekNr
+    else:
+      srenterweekNr = self.srenterweekNr
+      if srenterweekNr is not None:
+        srtitle = self.srtitle
+        if not srtitle:
+          remains = sr.settings["tournament.normal.minremains"]
+        else:
+          remains = sr.settings["tournament.srtitle.minremains"]
+        return srenterweekNr + remains
+
+  @property
+  @_main_only
   def srfsg(self):
     if self.srfsgname:
       return sr.slot.SlotGroup(self.srfsgname)
@@ -695,9 +727,9 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
       if srenterweekNr is not None:
         srtitle = self.srtitle
         if not srtitle:
-          remains = sr.settings["tournament.normal.remains"]
+          remains = sr.settings["tournament.normal.maxremains"]
         else:
-          remains = sr.settings["tournament.srtitle.remains"]
+          remains = sr.settings["tournament.srtitle.maxremains"]
         return srenterweekNr + remains
 
   @property
@@ -750,19 +782,30 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     srenterweekNr = self.srenterweekNr
     if srenterweekNr is not None:
       srtitle = self.srtitle
+      curr = sr.time.current_weekNr()
       if not srtitle:
-        remains = sr.settings["tournament.normal.remains"]
-        return srenterweekNr + remains
+        minrem = sr.settings["tournament.normal.minremains"]
+        maxrem0 = sr.settings["tournament.normal.maxremains"]
+        year = sr.time.fumbblyear(srenterweekNr)
+        yearstop = sr.time.fumbblyears()[year].stop
+        maxrem1 = yearstop - srenterweekNr
+        maxrem = min(maxrem0, maxrem1)
+        rem = max(minrem, maxrem)
+        if srenterweekNr + maxrem <= curr:
+          return srenterweekNr + rem
       else:
-        remains = sr.settings["tournament.srtitle.remains"]
-        latestsrexitweekNr = srenterweekNr + remains
+        minrem = sr.settings["tournament.srtitle.minremains"]
+        maxrem0 = sr.settings["tournament.srtitle.maxremains"]
+        maxrem1 = maxrem0
         prev, next_ = self.srsametitleprevnext
         if next_:
           next_srenterweekNr = next_.srenterweekNr
           if next_srenterweekNr:
-            return min(next_srenterweekNr, latestsrexitweekNr)
-        elif latestsrexitweekNr <= sr.time.current_weekNr():
-            return latestsrexitweekNr
+            maxrem1 = next_srenterweekNr - srenterweekNr
+        maxrem = min(maxrem0, maxrem1)
+        rem = max(minrem, maxrem)
+        if srenterweekNr + maxrem <= curr:
+          return srenterweekNr + rem
 
   @property
   def status(self):
