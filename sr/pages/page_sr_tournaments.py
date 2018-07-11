@@ -7,6 +7,16 @@ class WikiPage(helper.FUMBBLYearWikiPage):
   NAME = "SR-Tournaments-Y__"
 
   @property
+  def date(self):
+    fromdatestr = self.fromdate.strftime(sr.time.ISO_DATE_FMT)
+    todate = self.todate
+    if todate is not None:
+      todatestr = todate.strftime(sr.time.ISO_DATE_FMT)
+      return f'from {fromdatestr} to {todatestr}'
+    else:
+      return f'from {fromdatestr}'
+
+  @property
   def name(self):
     return f'SR-Tournaments-Y{self.fumbblyear}'
 
@@ -55,7 +65,11 @@ class WikiPage(helper.FUMBBLYearWikiPage):
     return helper.table(rows, align, header)
 
   def content(self):
-    return super().content(title=self.title, table=self.table)
+    return super().content(
+        date = self.date,
+        title = self.title,
+        table = self.table,
+    )
 
 
 def all():

@@ -47,6 +47,15 @@ def fumbblyear(weekNr):
     if weekNr in r:
       return y
 
+@sr.helper.default_from_func("fumbblyear", current_fumbblyear)
+def fumbblyear_firstdate(fumbblyear):
+  return firstdate(fumbblyears()[fumbblyear][0])
+
+
+@sr.helper.default_from_func("fumbblyear", current_fumbblyear)
+def fumbblyear_lastdate(fumbblyear):
+  return lastdate(fumbblyears()[fumbblyear][-1])
+
 
 _fumbblyears = ...
 def fumbblyears(*, rebuild=False):
@@ -59,7 +68,7 @@ def fumbblyears(*, rebuild=False):
     while d:
       T = d.popleft()
       if y == 1:
-        stop_weekNr = T.srenterweekNr
+        stop_weekNr = 1
       start_weekNr = stop_weekNr
       stop_weekNr = T.srenterweekNr + 1
       assert start_weekNr < stop_weekNr
@@ -87,6 +96,10 @@ def fumbblyears_unfinalized():
 @sr.helper.default_from_func("weekNr", current_weekNr)
 def lastdate(weekNr):
   return  firstdate(weekNr) + ONEWEEK - ONEDAY
+
+
+def lastfumbblyear():
+  return sorted(list(fumbblyears()))[-1]
 
 
 @sr.helper.default_from_func("weekNr", current_weekNr)

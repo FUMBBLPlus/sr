@@ -57,11 +57,20 @@ class FUMBBLYearWikiPage(
     self._weekNrs = ...
 
   @property
+  def fromdate(self):
+    return sr.time.fumbblyear_firstdate(self.fumbblyear)
+
+  @property
   def reports(self):
     return sorted(
         (sr.report.Report(w) for w in self.weekNrs),
         reverse = True,
     )
+
+  @property
+  def todate(self):
+    if self.fumbblyear != sr.time.lastfumbblyear():
+      return sr.time.fumbblyear_lastdate(self.fumbblyear)
 
   @property
   def tournaments(self):
