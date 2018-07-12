@@ -20,4 +20,5 @@ from . import team
 from . import tournament
 
 # pages
-from . import pages
+from . import notepages
+from . import wikipages
