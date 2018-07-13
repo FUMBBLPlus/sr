@@ -640,7 +640,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   def http(self):
     if self.groupId is not None:
       return (
-          "https://fumbbl.com/p/group"
+          "/p/group"
           "?op=view"
           "&p=tournaments"
           f'&group={self.groupId}'
