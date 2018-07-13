@@ -13,14 +13,12 @@ class NotePage(helper.NotePage):
       tfmt = f'{sr.time.ISO_DATE_FMT} {sr.time.ISO_TIME_FMT_M}'
       updated = updated.strftime(tfmt)
     kwargs["updated"] = updated
-    kwargs["weeknr"] = w = sr.time.current_weekNr()
-    current_report = sr.report.Report(w)
-    kwargs["current_report_nr"] = current_report.nr
+    kwargs["current_report_nr"] = sr.report.current_report().nr
     fumbblyears = sorted(sr.time.fumbblyears(), reverse=True)
     rnote = sr.notepages.page["SR-Reports-Y__"].NotePage
-    reports = [rnote.of_fumbblyear(16) for y in fumbblyears]
+    reports = [rnote.of_fumbblyear(y) for y in fumbblyears]
     tnote = sr.notepages.page["SR-Tournaments-Y__"].NotePage
-    tournaments = [tnote.of_fumbblyear(16) for y in fumbblyears]
+    tournaments = [tnote.of_fumbblyear(y) for y in fumbblyears]
     kwargs["reports"] = "\n | \\\n".join(
         f'[url={p.url}]{roman.to_roman(p.fumbblyear)}[/url]\\'
         for p in reports

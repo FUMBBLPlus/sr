@@ -95,7 +95,15 @@ def save_results(tournamentId):
 
 def save(name):
   name = name.lower()
-  s = _dumpfunc[name](name)
+  if name not in _dumpfunc:
+    s = json.dumps(
+        data[name],
+        ensure_ascii = False,
+        indent = "\t",
+        sort_keys = True,
+    )
+  else:
+    s = _dumpfunc[name](name)
   srdatadir_ = srdatadir()
   if not srdatadir_:
     return False
