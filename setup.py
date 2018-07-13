@@ -62,6 +62,7 @@ setup(
   extras_require = {
   },
   scripts = [
+      "scripts/sr_post.py",
       "scripts/sr_set_login.py",
       "scripts/sr_set_srdatadir.py",
       "scripts/sr_update_tournaments.py",

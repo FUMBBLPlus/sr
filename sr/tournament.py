@@ -496,10 +496,12 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         if p == m:
           return pstr
         i = self.SRData.Idx.srnteams
-        if p[:i] == m[:i] and m[i] in p[i]:
-          return pstr
-      errmsg = f'points not defined for class: {self.val}'
-      raise NotImplementedError(errmsg)
+        try:
+          if p[:i] == m[:i] and m[i] in p[i]:
+            return pstr
+        except TypeError:
+          continue
+      return self.NONE
 
     @property
     def groupdefaultlevel(self):
@@ -902,6 +904,12 @@ def observed():
   return {T for G in sr.group.observed() for T in G.tournaments}
 
 
+def pending():
+  return {
+      T for T in added()
+      if T.main is None or T.main.srenterweekNr is None
+  }
+
 
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def ofweekNr(weekNr):
@@ -921,7 +929,8 @@ def offumbblyear(fumbblyear):
   weekNr_range = sr.time.fumbblyears()[fumbblyear]
   return {
       T for T in added()
-      if T.main.srenterweekNr is not None
+      if T.main is not None
+      and T.main.srenterweekNr is not None
       and T.main.srenterweekNr in weekNr_range
   }
 
@@ -932,14 +941,14 @@ def sort(tournaments, reverse=False):
   def key(t):
     sign = 1 - 2 * reverse  # 1 normally and -1 if reverse
     return [
-      sign * (t.main.srenterweekNr is None),
+      sign * (t.main is None or t.main.srenterweekNr is None),
       sign * (
-          0 if t.main.srenterweekNr is None
+          0 if t.main is None or t.main.srenterweekNr is None
           else t.main.srenterweekNr
       ),
       (t.rank == Tournament.SRClass.MINOR),
-      slot_key[t.main.srfsgname],
-      t.main.srname,
+      (slot_key[t.main.srfsgname] if t.main else "?"),
+      (t.main.srname if t.main else "?"),
       -t.level,
       t.id,
     ]

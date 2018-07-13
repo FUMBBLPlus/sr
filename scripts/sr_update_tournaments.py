@@ -577,7 +577,7 @@ def main():
         return
 
 if __name__ == "__main__":
-  usage = "usage: update_tournaments.py"
+  usage = "usage: sr_update_tournaments.py"
   if len(sys.argv) > 1:
       print(usage)
       sys.exit()

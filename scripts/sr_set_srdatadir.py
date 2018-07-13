@@ -7,7 +7,7 @@ import sys
 import sr
 
 if __name__ == "__main__":
-  usage = "usage: set_srdatadir.py <directory>"
+  usage = "usage: sr_set_srdatadir.py <directory>"
   if len(sys.argv) > 1:
     srdatadir = pathlib.Path(sys.argv[1])
     if srdatadir.is_dir():
