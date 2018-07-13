@@ -21,4 +21,3 @@ from . import tournament
 
 # pages
 from . import notepages
-from . import wikipages
