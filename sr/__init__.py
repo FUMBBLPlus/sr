@@ -19,5 +19,8 @@ from . import slot
 from . import team
 from . import tournament
 
+# second pass modules
+from . import performance
+
 # pages
 from . import notepages

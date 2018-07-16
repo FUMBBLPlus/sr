@@ -44,7 +44,7 @@ def reload(name=None):
     filegen = srdatadir_.glob('*.json')
   # read objects
   for p in filegen:
-    with p.open() as f:
+    with p.open(encoding="utf8") as f:
       o = json.load(f)
     name = p.stem.lower()
     if name in INTKEYS:
@@ -107,7 +107,7 @@ def save(name):
   srdatadir_ = srdatadir()
   if not srdatadir_:
     return False
-  with (srdatadir_ / f'{name}.json').open("w") as f:
+  with (srdatadir_ / f'{name}.json').open("w", encoding="utf8") as f:
     f.write(s)
   return True
 

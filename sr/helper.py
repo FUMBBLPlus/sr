@@ -21,11 +21,14 @@ class InstanceRepeater(type):
 
   def __new__(meta, name, bases, dict_):
     dict_["__members__"] = {}
-    if "__hash__" not in dict_:
+    keys = set(dict_)
+    for b in bases:
+      keys |= set(b.__dict__)
+    if "__hash__" not in keys:
       dict_["__hash__"] = (
           lambda self: hash(self._KEY)
       )
-    if "__eq__" not in dict_:
+    if "__eq__" not in keys:
       dict_["__eq__"] = (
           lambda self, other: hash(self) == hash(other)
       )
@@ -36,7 +39,7 @@ class InstanceRepeater(type):
         "__gt__",
         "__ge__",
     ):
-      if k not in dict_:
+      if k not in keys:
         dict_[k] = (
             lambda self, other, k=k:
             getattr(self._KEY, k)(other._KEY)

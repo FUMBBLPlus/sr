@@ -54,3 +54,13 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
     except json.JSONDecodeError:
       pass
     return ...
+
+
+def iter_referenced():
+  yield from Coach.__members__.values()
+
+
+def save():
+  for T in iter_referenced():
+    T.srnewdata_apply()
+  sr._data.save("coach")

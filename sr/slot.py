@@ -38,7 +38,11 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
       if weekNr in weekNrs:
         # Copy row to prevent messing up sr.data["slot"].
         rules = list(row)
-        nextslotgroup = SlotGroup(rules[self.Idx.nextslotgroup])
+        nextslotgoupname = rules[self.Idx.nextslotgroup]
+        if nextslotgoupname is None:
+          nextslotgroup = None
+        else:
+          nextslotgroup = SlotGroup(nextslotgoupname)
         rules[self.Idx.nextslotgroup] = nextslotgroup
         return self.Rules(*rules)
 
@@ -53,3 +57,29 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
 
   def teamslots(self, weekNr=None):
     return self.rules(weekNr).teamslots
+
+
+class TeamSlots(metaclass=sr.helper.InstanceRepeater):
+
+  def __init__(self, teamId, weekNr):
+    pass  # without this instantiation raises TypeError
+
+  @property
+  def team(self):
+    return sr.team.Team(self.teamId)
+
+  @property
+  def teamId(self):
+    return self._KEY[0]
+
+  @property
+  def weekNr(self):
+    return self._KEY[1]
+
+  @property
+  def slotgrouprules(self):
+    print(list(sr.data["slot"]))
+    return {
+        SlotGroup(sgname): SlotGroup(sgname).rules(self.weekNr)
+        for sgname in sr.data["slot"]
+    }

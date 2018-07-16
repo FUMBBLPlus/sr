@@ -55,15 +55,18 @@ class Team(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def apicoachId(self):
-    return self.apidata.get("coach", {}).get("id", ...)
+    if self.apidata:
+      return self.apidata.get("coach", {}).get("id", ...)
 
   @property
   def apiname(self):
-    return self.apidata.get("name", ...)
+    if self.apidata:
+      return self.apidata.get("name", ...)
 
   @property
   def apirosterId(self):
-    return self.apidata.get("roster", {}).get("id", ...)
+    if self.apidata:
+      return self.apidata.get("roster", {}).get("id", ...)
 
   @property
   def coach(self):
@@ -82,3 +85,13 @@ class Team(metaclass=sr.helper.InstanceRepeater):
       return sr.roster.Roster(self.rosterId)
     elif not self.isfiller:
       return sr.roster.SomeRoster
+
+
+def iter_referenced():
+  yield from Team.__members__.values()
+
+
+def save():
+  for T in iter_referenced():
+    T.srnewdata_apply()
+  sr._data.save("team")

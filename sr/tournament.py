@@ -1,5 +1,6 @@
 import enum
 import functools
+import itertools
 import json
 import math
 
@@ -24,7 +25,7 @@ class Matchup(metaclass=sr.helper.InstanceRepeater):
   def __init__(self,
       tournamentId: int,
       round_: int,
-      teamIds: frozenset
+      teamIds: frozenset,
   ):
     pass  # without this instantiation raises TypeError
 
@@ -133,15 +134,21 @@ class Matchup(metaclass=sr.helper.InstanceRepeater):
 
 
 
-
-
 @sr.helper.idkey("tournamentId")
 class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   NO_SCHEDULE = "[]"
+  TOURNAMENT_ATTRS = (
+      "matchups",
+      "results",
+      "rounds",
+      "srfinished",
+      "srrounds",
+  )
 
   def __init__(self, tournamentId: int):
     self._apidata = ...
+    self._results = ...
 
   @property
   def apidata(self):
@@ -169,49 +176,50 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def results(self):
-    d = sr._data.load_results(self.tournamentId)
-    if d is not None:
-      return d
-    d = {
-        Te: [Matchup.Result.none] * self.rounds
-        for Te in self.teams
-        if not Te.isfiller
-    }
-    quitters = set()
-    for r in range(1, self.rounds + 1):
-      for m in {m for m in self.matchups if m.round == r}:
-        for Te, result_ in m.results.items():
-          d[Te][r-1] = result_
-      # Now I have to look for quitters
-      if 1 < r:
-        for Te, results_ in d.items():
-          if Te in quitters:
-            continue
-          prev, this = results_[r-2:r]
-          if this != Matchup.Result.none:
-            continue
-          # Replacement teams should not get treated as quitters
-          # before their first participation.
-          for r2, result2 in enumerate(results_, 1):
-            if result2 != Matchup.Result.none:
-              break
-          if r <= r2:
-            continue
-          # For non-elimination tournament, no participation in
-          # a round is considered a quit.
-          # For elimination tournaments the previous round
-          # should be checked.
-          if (
-              not self.tournament.iselim
-              or prev in {
-                  Matchup.Result.win,
-                  Matchup.Result.bye,
-                  Matchup.Result.fillerbye,
-              }
-          ):
-            d[Te][r-1] = Matchup.Result.quit
-            quitters.add(Te)
-    return d
+    if self._results is ...:
+      d = sr._data.load_results(self.tournamentId)
+      if d is None:
+        d = {
+            Te: [Matchup.Result.none] * self.rounds
+            for Te in self.teams
+            if not Te.isfiller
+        }
+        quitters = set()
+        for r in range(1, self.rounds + 1):
+          for m in {m for m in self.matchups if m.round == r}:
+            for Te, result_ in m.results.items():
+              d[Te][r-1] = result_
+          # Now I have to look for quitters
+          if 1 < r:
+            for Te, results_ in d.items():
+              if Te in quitters:
+                continue
+              prev, this = results_[r-2:r]
+              if this != Matchup.Result.none:
+                continue
+              # Replacement teams should not get treated as
+              # quitters before their first participation.
+              for r2, result2 in enumerate(results_, 1):
+                if result2 != Matchup.Result.none:
+                  break
+              if r <= r2:
+                continue
+              # For non-elimination tournament, no participation
+              # in a round is considered a quit.
+              # For elimination tournaments the previous round
+              # should be checked.
+              if (
+                  not self.tournament.iselim
+                  or prev in {
+                      Matchup.Result.win,
+                      Matchup.Result.bye,
+                      Matchup.Result.fillerbye,
+                  }
+              ):
+                d[Te][r-1] = Matchup.Result.quit
+                quitters.add(Te)
+      self._results = d
+    return self._results
 
   @property
   def rounds(self):
@@ -573,13 +581,20 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return super().__delattr__(name)
 
   def __dir__(self):
-    superdir = list(super().__dir__())
-    return sorted(superdir + self._srclassattrs())
+    dir_ = list(super().__dir__())
+    dir_.extend(self._srclassattrs())
+    dir_.extend(self.schedule.TOURNAMENT_ATTRS)
+    return sorted(dir_)
 
   def __getattr__(self, name):
+    if name in ("_KEY", "id", "schedule"):
+      # avoids infinite recursion
+      # object does not have a __getattr__ method
+      return super().__getattribute__(name)
     if name in self._srclassattrs():
       return getattr(self.srclass, name)
-    # object does not have a __getattr__ method
+    if name in self.schedule.TOURNAMENT_ATTRS:
+      return getattr(self.schedule, name)
     return super().__getattribute__(name)
 
   def __setattr__(self, name, value):
@@ -593,6 +608,41 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   @property
   def _srclassdotval(self):
     return self.srclass.val
+
+  @property
+  def allcoaches(self):
+    tournaments = itertools.chain([self], self.qualifiers)
+    return set(Co for T in tournaments for Co in T.coaches)
+
+  @property
+  def allcoachperformances(self):
+    return {
+        sr.performance.CoachPerformance(self.id, C.id)
+        for C in self.allcoaches
+    }
+
+  @property
+  def allteamperformances(self):
+    return {
+        sr.performance.TeamPerformance(self.id, Te.id)
+        for Te in self.allteams
+    }
+
+  @property
+  def allteams(self):
+    tournaments = itertools.chain([self], self.qualifiers)
+    return set(Te for T in tournaments for Te in T.teams)
+
+  @property
+  def coaches(self):
+    return {Te.coach for Te in self.teams if not Te.isfiller}
+
+  @property
+  def coachperformances(self):
+    return {
+        sr.performance.CoachPerformance(self.id, C.id)
+        for C in self.coaches
+    }
 
   @property
   def fumbblyear(self):
@@ -814,6 +864,20 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     if self.group:
       s = self.group.apidata_tournament[self]["status"]
       return s.lower()
+
+  @property
+  def teams(self):
+    # schedule results ar Team: resultsarray dictionaries
+    return set(self.schedule.results)
+
+
+  @property
+  def teamperformances(self):
+    return {
+        sr.performance.TeamPerformance(self.id, Te.id)
+        for Te in self.teams if not Te.isfiller
+    }
+
 
   @property
   def winner(self):
