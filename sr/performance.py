@@ -22,14 +22,14 @@ def _main_tournament_only(method):
 
 class BasePerformance(metaclass=sr.helper.InstanceRepeater):
 
-  UGLY_RESULTS = {
+  DIRTY_RESULTS = {
       sr.tournament.Matchup.Result.conceded,
       sr.tournament.Matchup.Result.fortfeit,
       sr.tournament.Matchup.Result.quit,
   }
 
   def __init__(self):
-    self._flawless = ...
+    self._clean = ...
     self._points = ...
 
   def __repr__(self):
@@ -68,21 +68,21 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
 
   @property
   @_main_tournament_only
-  def flawless(self):
-    if self._flawless is ...:
-      nice = bool(self.distinctresults & self.UGLY_RESULTS)
-      self._flawless = (not nice)
-    return self._flawless
+  def clean(self):
+    if self._clean is ...:
+      nice = bool(self.distinctresults & self.DIRTY_RESULTS)
+      self._clean = (not nice)
+    return self._clean
 
   @property
   @_main_tournament_only
   def sort_key(self):
-    if not self.flawless:
-      # ugly results first with smallest points first
-      return self.flawless, self.points
+    if not self.clean:
+      # dirty results first with smallest points first
+      return self.clean, self.points
     else:
-      # flawless results second with highest points first
-      return self.flawless, -self.points
+      # clean results second with highest points first
+      return self.clean, -self.points
 
 
 
@@ -221,7 +221,7 @@ class TeamPerformance(BasePerformance):
       p = self.cumulatedrawpoints
       multiapplic = self.multiapplic
       if not multiapplic:
-        return p
+        self._points = p
       else:
         d_mp = {TP: TP.cumulatedrawpoints for TP in multiapplic}
         d_mp[self] = p
@@ -267,7 +267,7 @@ class TeamPerformance(BasePerformance):
       wskip = 0
       normprog = reversed(list(enumerate(progression, 1)))
       for round_, result in normprog:
-        if result in self.UGLY_RESULTS:
+        if result in self.DIRTY_RESULTS:
           wskip += 1
         elif result == sr.tournament.Matchup.Result.win:
           if wskip:
@@ -287,7 +287,7 @@ class TeamPerformance(BasePerformance):
       winpts, drawpts, losspts = parts2
       pts = initialpts
       for result in self.progression:
-        if result in self.UGLY_RESULTS:
+        if result in self.DIRTY_RESULTS:
           pts -= winpts + drawpts
         elif result == sr.tournament.Matchup.Result.win:
           pts += winpts

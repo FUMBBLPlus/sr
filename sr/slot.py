@@ -12,8 +12,9 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
     exitweekNr = 1
     coachslots = 2
     teamslots = 3
-    nextslotgroup = 4
-    pointsincluded = 5
+    dirtyslotgroup = 4
+    nextslotgroup = 5
+    pointsincluded = 6
 
   Rules = collections.namedtuple("Rules",  Idx.__members__)
 
@@ -38,6 +39,12 @@ class SlotGroup(metaclass=sr.helper.InstanceRepeater):
       if weekNr in weekNrs:
         # Copy row to prevent messing up sr.data["slot"].
         rules = list(row)
+        dirtyslotgoupname = rules[self.Idx.dirtyslotgroup]
+        if dirtyslotgoupname is None:
+          dirtyslotgroup = None
+        else:
+          dirtyslotgroup = SlotGroup(dirtyslotgoupname)
+        rules[self.Idx.dirtyslotgroup] = dirtyslotgroup
         nextslotgoupname = rules[self.Idx.nextslotgroup]
         if nextslotgoupname is None:
           nextslotgroup = None
