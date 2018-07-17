@@ -28,6 +28,13 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
       sr.tournament.Matchup.Result.quit,
   }
 
+  MATCH_RESULTS = {
+      sr.tournament.Matchup.Result.win,
+      sr.tournament.Matchup.Result.draw,
+      sr.tournament.Matchup.Result.loss,
+      sr.tournament.Matchup.Result.conceded,
+  }
+
   def __init__(self):
     self._clean = ...
     self._points = ...
@@ -77,12 +84,13 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
   @property
   @_main_tournament_only
   def sort_key(self):
+    enterweekNr = self.tournament.srenterweekNr
     if not self.clean:
       # dirty results first with smallest points first
-      return self.clean, self.points
+      return self.clean, self.points, -enterweekNr
     else:
       # clean results second with highest points first
-      return self.clean, -self.points
+      return self.clean, -self.points, -enterweekNr
 
 
 
@@ -96,6 +104,14 @@ class CoachPerformance(BasePerformance):
       coachId: int,
   ):
     super().__init__()
+
+  @property
+  @_main_tournament_only
+  def allmatches(self):
+    return sum(
+        TP.allnummatches
+        for TP in self.allteamperformances
+    )
 
   @property
   def coach(self):
@@ -140,6 +156,10 @@ class CoachPerformance(BasePerformance):
     }
 
   @property
+  def nummatches(self):
+    return sum(TP.nummatches for TP in self.teamperformances)
+
+  @property
   @_main_tournament_only
   def points(self):
     if self._points is ...:
@@ -180,6 +200,15 @@ class TeamPerformance(BasePerformance):
   ):
     super().__init__()
 
+
+  @property
+  @_main_tournament_only
+  def allnummatches(self):
+    result = self.nummatches
+    for TP in self.qualifierteamperformances:
+      result += TP.nummatches
+    return result
+
   @property
   def coachperformance(self):
     return CoachPerformance(
@@ -215,6 +244,13 @@ class TeamPerformance(BasePerformance):
     }
 
   @property
+  def nummatches(self):
+    return len([
+        r for r in self.results
+        if r in self.MATCH_RESULTS
+    ])
+
+  @property
   @_main_tournament_only
   def points(self):
     if self._points is ...:
@@ -233,8 +269,7 @@ class TeamPerformance(BasePerformance):
 
   @property
   def progression(self):
-    Schedule = sr.tournament.Schedule
-    return Schedule(self.tournamentId).results.get(self.team)
+    return self.tournament.schedule.results.get(self.team)
 
   @property
   @_main_tournament_only
@@ -299,6 +334,15 @@ class TeamPerformance(BasePerformance):
       pts += winnerpts
     pts = max(0, pts)
     return pts
+
+  @property
+  def results(self):
+    return self.tournament.schedule.results.get(self.team, [])
+
+  @property
+  def strresults(self):
+    schedule = self.tournament.schedule
+    return schedule.strresults.get(self.team, "")
 
   @property
   def team(self):

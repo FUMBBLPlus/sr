@@ -222,6 +222,18 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
     return self._results
 
   @property
+  def strresults(self):
+    d = {
+        T: "".join([R.value for R in Tresults])
+        for T, Tresults in self.results.items()
+    }
+    r = self.srrounds
+    for T, s in d.items():
+      if not s:
+        d[T] = Matchup.Result.none.value * r
+    return d
+
+  @property
   def rounds(self):
     if self.tournament.iselim:
       p = max({matchup.position for matchup in self.matchups})
@@ -643,6 +655,11 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         sr.performance.CoachPerformance(self.id, C.id)
         for C in self.coaches
     }
+
+  @property
+  def fullhttp(self):
+    if self.groupId is not None:
+      return f'https://{fumbblapi.host}{self.http}'
 
   @property
   def fumbblyear(self):

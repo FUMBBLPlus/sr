@@ -82,11 +82,8 @@ def load_results(tournamentId):
 
 
 def save_results(tournamentId):
-  results = sr.tournament.Schedule(tournamentId).results
-  results_ = {
-      T.id: "".join([R.value for R in Tresults])
-      for T, Tresults in results.items()
-  }
+  strresults = sr.tournament.Schedule(tournamentId).strresults
+  results_ = {T.id: s for T, s in strresults.items()}
   p = results_file(tournamentId)
   p.parent.mkdir(parents=True, exist_ok=True)  # ensure dir
   with p.open("w") as f:
