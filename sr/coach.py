@@ -4,7 +4,7 @@ from . import fumbblapi
 import sr
 
 
-
+@sr.helper.objectreprhash
 class SomeCoach:
 
   def __bool__(self):
@@ -20,7 +20,8 @@ class SomeCoach:
   def name(self):
     return str(self)
 
-SomeCoach = SomeCoach()  # singleton
+
+
 
 
 

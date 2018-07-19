@@ -28,6 +28,7 @@ def main():
     sys.stdout.flush()
   print(f'Updated at {now.strftime(timefmt)}')
 
+
 if __name__ == "__main__":
   usage = "usage: sr_post.py"
   if len(sys.argv) > 1:

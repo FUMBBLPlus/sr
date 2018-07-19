@@ -142,6 +142,11 @@ def idkey(cls, attrname="id", ftypecast=int):
   return cls
 
 
+def objectreprhash(cls):
+  cls.__hash__ = lambda self: hash(object.__repr__(self))
+  return cls
+
+
 
 
 def srdata(name, colnames,

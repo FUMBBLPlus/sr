@@ -5,6 +5,7 @@ import json
 import math
 
 from . import fumbblapi
+from . import roman
 import sr
 
 
@@ -280,7 +281,7 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
       # Example: Tournament(19144).
       f = True
       while r and 1 < r and f:
-        f = round_isforfeited(schedule, r)
+        f = self.round_isforfeited(r)
         if f:
           r -= 1
     return r
@@ -570,7 +571,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     # via their groups as knowing their group is required for
     # most of the methods. However, there is no way of getting
     # the group of an arbitrary tournament.
-    # So use any of the added(), all(), changed(),
+    # So use any of the added(), all_(), changed(),
     # main_unknown(), new(), or the observed() functions to get
     # properly set tournament instances.
 
@@ -631,6 +632,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return {
         sr.performance.CoachPerformance(self.id, C.id)
         for C in self.allcoaches
+        if C
     }
 
   @property
@@ -654,6 +656,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return {
         sr.performance.CoachPerformance(self.id, C.id)
         for C in self.coaches
+        if C
     }
 
   @property
@@ -935,19 +938,20 @@ def added():
   }
 
 
-def all():
+def all_():
   return added() | observed()
 
 
 def changed():
-  return {T for T in all() if T.srdataischanged}
+  return {T for T in all_() if T.srdataischanged}
 
 
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def enters(weekNr):
   return {
       T for T in added()
-      if T.main.srenterweekNr is not None
+      if T.main is not None
+      and T.main.srenterweekNr is not None
       and weekNr == T.main.srenterweekNr
   }
 
@@ -974,7 +978,7 @@ def knownlasttimer(weekNr):
 
 
 def main_unknown():
-  return {T for T in all() if T.main is None}
+  return {T for T in all_() if T.main is None}
 
 
 def new():
@@ -992,21 +996,15 @@ def pending():
   }
 
 
-@sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
-def ofweekNr(weekNr):
-  return {
-      T for T in added()
-      if T.main.srenterweekNr is not None
-      and T.main.srlatestexitweekNr is not None
-      and weekNr in range(
-          T.main.srenterweekNr, T.main.srlatestexitweekNr
-      )
-  }
-
 @sr.helper.default_from_func(
     "fumbblyear", sr.time.current_fumbblyear
 )
 def offumbblyear(fumbblyear):
+  if isinstance(fumbblyear, str):
+    if fumbblyear.isdecimal():
+      fumbblyear = int(fumbblyear)
+    else:
+      fumbblyear = roman.from_roman(fumbblyear)
   weekNr_range = sr.time.fumbblyears()[fumbblyear]
   return {
       T for T in added()
@@ -1014,6 +1012,20 @@ def offumbblyear(fumbblyear):
       and T.main.srenterweekNr is not None
       and T.main.srenterweekNr in weekNr_range
   }
+
+
+@sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
+def ofweekNr(weekNr):
+  return {
+      T for T in added()
+      if T.main is not None
+      and T.main.srenterweekNr is not None
+      and T.main.srlatestexitweekNr is not None
+      and weekNr in range(
+          T.main.srenterweekNr, T.main.srlatestexitweekNr
+      )
+  }
+
 
 def sort(tournaments, reverse=False):
   slot_key = {

@@ -38,6 +38,7 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
   def __init__(self):
     self._clean = ...
     self._points = ...
+    self._totalpoints = ...
 
   def __repr__(self):
     return (
@@ -45,25 +46,28 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
             f'({self._KEY[0]}, {self._KEY[1]})'
         )
 
-  def __lt__(self, other):
-    return (self.sort_key < other.sort_key)
-  def __le__(self, other):
-    return (self.sort_key <= other.sort_key)
-  def __eq__(self, other):
-    return (self.sort_key == other.sort_key)
-  def __ne__(self, other):
-    return (self.sort_key != other.sort_key)
-  def __gt__(self, other):
-    return (self.sort_key > other.sort_key)
-  def __ge__(self, other):
-    return (self.sort_key >= other.sort_key)
+ #def __lt__(self, other):
+ #  return (self.sort_key < other.sort_key)
+ #def __le__(self, other):
+ #  return (self.sort_key <= other.sort_key)
+ #def __eq__(self, other):
+ #  return (self.sort_key == other.sort_key)
+ #def __ne__(self, other):
+ #  return (self.sort_key != other.sort_key)
+ #def __gt__(self, other):
+ #  return (self.sort_key > other.sort_key)
+ #def __ge__(self, other):
+ #  return (self.sort_key >= other.sort_key)
+
 
   @property
   def alltournaments(self):
-    return list(itertools.chain(
-        [self.tournament],
-        self.tournament.qualifiers,
-    ))
+    tournaments = set(self.withqualifiers)
+    tournaments |= {
+        TP.tournament for TP in self.levelperformances
+    }
+    return tournaments
+
 
   @property
   def tournament(self):
@@ -74,11 +78,19 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
     return self._KEY[0]
 
   @property
-  @_main_tournament_only
   def clean(self):
     if self._clean is ...:
-      nice = bool(self.distinctresults & self.DIRTY_RESULTS)
-      self._clean = (not nice)
+      performances = self.thisallteamperformances
+      teams = {TP.team for TP in performances}
+      if len(teams) != 1:
+        self._clean = False
+    if self._clean is ...:
+      levels = {TP.tournament.level for TP in performances}
+      if len(levels) < len(performances):
+        self._clean = False
+    if self._clean is ...:
+      unclean = bool(self.distinctresults & self.DIRTY_RESULTS)
+      self._clean = (not unclean)
     return self._clean
 
   @property
@@ -92,7 +104,12 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
       # clean results second with highest points first
       return self.clean, -self.points, -enterweekNr
 
-
+  @property
+  def withqualifiers(self):
+    return list(itertools.chain(
+        [self.tournament],
+        self.tournament.qualifiers,
+    ))
 
 
 
@@ -130,7 +147,6 @@ class CoachPerformance(BasePerformance):
     )
 
   @property
-  @_main_tournament_only
   def distinctresults(self):
     Schedule = sr.tournament.Schedule
     return {
@@ -156,23 +172,51 @@ class CoachPerformance(BasePerformance):
     }
 
   @property
+  def levelperformances(self):
+    if self.tournament.ismain:
+      return {self}
+    level = self.tournament.level
+    tournaments = {
+        T for T in self.tournament.main.qualifiers
+        if T.level == level
+        and self.coach in T.coaches
+    }
+    return {
+        CoachPerformance(T.id, self.coachId)
+        for T in tournaments
+    }
+
+  @property
   def nummatches(self):
     return sum(TP.nummatches for TP in self.teamperformances)
 
   @property
-  @_main_tournament_only
   def points(self):
     if self._points is ...:
-      self._points = sum(
-          TP.points
-          for TP in self.allteamperformances
+      lp = sorted(
+          (TP.rawpoints, TP.tournamentId, TP, CP)
+          for CP in self.levelperformances
+          for TP in CP.teamperformances
       )
+      done = False
+      for pts, _, TP, CP in lp:
+        # Multiple applications of same teams are handled in the
+        # TeamPerformance points: one point is kept the rest are
+        # zeroed.
+        if TP.points == TP.rawpoints:
+          # I want to keep the lowest of those kept team points
+          # for the coach and done.
+          if not done:
+            CP._points = pts
+            done = True
+        # The rest of the points should be zeroed.
+        if CP._points is ...:
+          CP._points = 0
+    # If no team made to this level then at this point
+    # self._points is yet unchanged but it should be zero.
+    if self._points is ...:
+      self._points = 0
     return self._points
-
-  @property
-  def rawpoints(self):
-    return sum(TP.rawpoints for TP in self.teamperformances)
-
 
   @property
   def teamperformances(self):
@@ -188,6 +232,43 @@ class CoachPerformance(BasePerformance):
         if Te.coach is self.coach
     }
 
+  @property
+  def thisallteamperformances(self):
+    return {
+        TP
+        for T in self.alltournaments
+        for TP in T.allteamperformances
+        if TP.team.coach is self.coach
+    }
+
+  @property
+  def thisalltournaments(self):
+    return {
+        T for T in self.alltournaments
+        if self.coach in T.coaches
+    }
+
+
+  @property
+  @_main_tournament_only
+  def totalnummatches(self):
+    return sum(
+        CoachPerformance(T.id, self.teamId).nummatches
+        for T in self.withqualifiers
+        if self.coach in T.coaches
+    )
+
+  @property
+  @_main_tournament_only
+  def totalpoints(self):
+    if self._totalpoints is ...:
+      self._totalpoints = sum(
+          CoachPerformance(T.id, self.coachId).points
+          for T in self.withqualifiers
+          if self.coach in T.coaches
+      )
+    return self._totalpoints
+
 
 
 
@@ -198,16 +279,8 @@ class TeamPerformance(BasePerformance):
       tournamentId: int,
       teamId: int,
   ):
+    self._rawpoints = ...
     super().__init__()
-
-
-  @property
-  @_main_tournament_only
-  def allnummatches(self):
-    result = self.nummatches
-    for TP in self.qualifierteamperformances:
-      result += TP.nummatches
-    return result
 
   @property
   def coachperformance(self):
@@ -216,21 +289,27 @@ class TeamPerformance(BasePerformance):
     )
 
   @property
-  @_main_tournament_only
-  def cumulatedrawpoints(self):
-    return sum(
-        TeamPerformance(T.id, self.teamId).rawpoints
-        for T in self.alltournaments
-    )
-
-  @property
-  @_main_tournament_only
   def distinctresults(self):
     Schedule = sr.tournament.Schedule
     return {
         result
         for T in self.alltournaments
         for result in Schedule(T.id).results.get(self.team, [])
+    }
+
+  @property
+  def levelperformances(self):
+    if self.tournament.ismain:
+      return {self}
+    level = self.tournament.level
+    tournaments = {
+        T for T in self.tournament.main.qualifiers
+        if T.level == level
+        and self.team in T.teams
+    }
+    return {
+        TeamPerformance(T.id, self.teamId)
+        for T in tournaments
     }
 
   @property
@@ -251,20 +330,17 @@ class TeamPerformance(BasePerformance):
     ])
 
   @property
-  @_main_tournament_only
   def points(self):
     if self._points is ...:
-      p = self.cumulatedrawpoints
-      multiapplic = self.multiapplic
-      if not multiapplic:
-        self._points = p
-      else:
-        d_mp = {TP: TP.cumulatedrawpoints for TP in multiapplic}
-        d_mp[self] = p
-        min_p = min(d_mp.values())
-        p = min_p // len(d_mp)
-        for TP in d_mp:
-          TP._points = p
+      lp = sorted(
+          (TP.rawpoints, TP.tournamentId, TP)
+          for TP in self.levelperformances
+      )
+      for i, (pts, _, TP) in enumerate(lp):
+        if i == 0:
+          TP._points = pts
+        else:
+          TP._points = 0
     return self._points
 
   @property
@@ -281,59 +357,61 @@ class TeamPerformance(BasePerformance):
 
   @property
   def rawpoints(self):
-    progression = self.progression
-    if progression is None:
-      return 0
-    parts0 = self.tournament.srpointsstr.split('|')
-    parts1 = [s.strip() for s in reversed(parts0)]
-    initialpts = int(parts1[0])
-    if len(parts1) == 3:
-      winnerpts = int(parts1[2])
-    else:
-      winnerpts = None
-    if self.tournament.iselim:
-      parts2 = [
-          int(s.strip())
-          for s in reversed(parts1[1].split('–'))
-      ]
-      if winnerpts is None:
-        winnerpts = (parts2[-1] - parts2[-2]) // 4
-        parts2[-1] -= winnerpts
-      wskip = 0
-      normprog = reversed(list(enumerate(progression, 1)))
-      for round_, result in normprog:
-        if result in self.DIRTY_RESULTS:
-          wskip += 1
-        elif result == sr.tournament.Matchup.Result.win:
-          if wskip:
-            wskip -= 1
-          else:
-            break
+    if self._rawpoints is ...:
+      progression = self.progression
+      if progression is None:
+        self._rawpoints = 0
+        return 0
+      parts0 = self.tournament.srpointsstr.split('|')
+      parts1 = [s.strip() for s in reversed(parts0)]
+      initialpts = int(parts1[0])
+      if len(parts1) == 3:
+        winnerpts = int(parts1[2])
       else:
-        if wskip:
-          round_ = None
-          pts = 0
+        winnerpts = None
+      if self.tournament.iselim:
+        parts2 = [
+            int(s.strip())
+            for s in reversed(parts1[1].split('–'))
+        ]
+        if winnerpts is None:
+          winnerpts = (parts2[-1] - parts2[-2]) // 4
+          parts2[-1] -= winnerpts
+        wskip = 0
+        normprog = reversed(list(enumerate(progression, 1)))
+        for round_, result in normprog:
+          if result in self.DIRTY_RESULTS:
+            wskip += 1
+          elif result == sr.tournament.Matchup.Result.win:
+            if wskip:
+              wskip -= 1
+            else:
+              break
         else:
-          round_ = 0
-      if round_ is not None:
-        pts = ([initialpts] + parts2)[round_]
-    else:
-      parts2 = [int(s.strip()) for s in parts1[1].split('/')]
-      winpts, drawpts, losspts = parts2
-      pts = initialpts
-      for result in self.progression:
-        if result in self.DIRTY_RESULTS:
-          pts -= winpts + drawpts
-        elif result == sr.tournament.Matchup.Result.win:
-          pts += winpts
-        elif result == sr.tournament.Matchup.Result.draw:
-          pts += drawpts
-        elif result == sr.tournament.Matchup.Result.loss:
-          pts += losspts
-    if self.team is self.tournament.winner and winnerpts:
-      pts += winnerpts
-    pts = max(0, pts)
-    return pts
+          if wskip:
+            round_ = None
+            pts = 0
+          else:
+            round_ = 0
+        if round_ is not None:
+          pts = ([initialpts] + parts2)[round_]
+      else:
+        parts2 = [int(s.strip()) for s in parts1[1].split('/')]
+        winpts, drawpts, losspts = parts2
+        pts = initialpts
+        for result in self.progression:
+          if result in self.DIRTY_RESULTS:
+            pts -= winpts + drawpts
+          elif result == sr.tournament.Matchup.Result.win:
+            pts += winpts
+          elif result == sr.tournament.Matchup.Result.draw:
+            pts += drawpts
+          elif result == sr.tournament.Matchup.Result.loss:
+            pts += losspts
+      if self.team is self.tournament.winner and winnerpts:
+        pts += winnerpts
+      self._rawpoints = max(0, pts)
+    return self._rawpoints
 
   @property
   def results(self):
@@ -342,7 +420,12 @@ class TeamPerformance(BasePerformance):
   @property
   def strresults(self):
     schedule = self.tournament.schedule
-    return schedule.strresults.get(self.team, "")
+    strresults = schedule.strresults
+    if self.team in strresults:
+      return strresults[self.team]
+    else:
+      nonestr = sr.tournament.Matchup.Result.none.value
+      return nonestr * schedule.srrounds
 
   @property
   def team(self):
@@ -352,4 +435,38 @@ class TeamPerformance(BasePerformance):
   def teamId(self):
     return self._KEY[1]
 
+  @property
+  def thisallteamperformances(self):
+    return {
+        TeamPerformance(T.id, self.team.id)
+        for T in self.alltournaments
+        if self.team in T.teams
+    }
+
+  @property
+  def thisalltournaments(self):
+    return {
+        T for T in self.alltournaments
+        if self.team in T.teams
+    }
+
+  @property
+  @_main_tournament_only
+  def totalnummatches(self):
+    return sum(
+        TeamPerformance(T.id, self.teamId).nummatches
+        for T in self.withqualifiers
+        if self.team in T.teams
+    )
+
+  @property
+  @_main_tournament_only
+  def totalpoints(self):
+    if self._totalpoints is ...:
+      self._totalpoints = sum(
+          TeamPerformance(T.id, self.teamId).points
+          for T in self.withqualifiers
+          if self.team in T.teams
+      )
+    return self._totalpoints
 

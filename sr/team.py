@@ -73,7 +73,7 @@ class Team(metaclass=sr.helper.InstanceRepeater):
     if self.coachId is not None:
       return sr.coach.Coach(self.coachId)
     elif not self.isfiller:
-      return sr.coach.SomeCoach
+      return sr.coach.SomeCoach()
 
   @property
   def isfiller(self):
@@ -84,7 +84,7 @@ class Team(metaclass=sr.helper.InstanceRepeater):
     if self.rosterId:
       return sr.roster.Roster(self.rosterId)
     elif not self.isfiller:
-      return sr.roster.SomeRoster
+      return sr.roster.SomeRoster()
 
 
 def iter_referenced():
