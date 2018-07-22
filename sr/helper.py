@@ -47,17 +47,26 @@ class InstanceRepeater(type):
     return type.__new__(meta, name, bases, dict_)
 
   def __call__(cls, *args):
+    #print("__call__", cls, args)
     if hasattr(cls, "_get_key"):
       key = cls._get_key(*args)
     else:
       key = tuple(args)
+    #print("__call__", cls, args, "..")
     if key in cls.__members__:
       instance = cls.__members__[key]
     else:
-      instance = type.__call__(cls, *args)
-      instance._KEY = key
+      #print("type.__call__(cls, *args)")
+      #instance = type.__call__(cls, *args)
+      #print("instance = cls.__new__(cls)")
+      instance = cls.__new__(cls)
+      #print("object.__setattr__(instance, \"_KEY\", key)")
+      object.__setattr__(instance, "_KEY", key)
+      #print("hash(instance)")
       hash(instance)  # this raises TypeError if key is mutable
+      instance.__init__(*args)
       cls.__members__[key] = instance
+    #print("__call__", cls, args, "instance")
     return instance
 
 
@@ -254,24 +263,26 @@ def srdata(name, colnames,
 def srdatavalfgetfactory(colname, valattrs=None):
   valattrs = valattrs or []
   def fget(self):
-    val = getattr(self, f'_{colname}')
+    val = object.__getattribute__(self, f'_{colname}')
     for valattr in valattrs:
       if val in {..., None}:
         if callable(valattr):
           val = valattr(self)
         else:
-          val = getattr(self, valattr)
+          val = object.__getattribute__(self, valattr)
         if val not in {..., None}:
           break
     else:
       if val is ...:
         val = None
     if hasattr(self, f'_{colname}_fgetvalcast'):
-      val = getattr(self, f'_{colname}_fgetvalcast')(val)
+      mname = f'_{colname}_fgetvalcast'
+      m = object.__getattribute__(self, mname)
+      val = m(val)
     elif hasattr(self, "_fgetvalcast"):
-      val = getattr(self, "_fgetvalcast")(colname, val)
-    setattr(self, f'_{colname}', val)
-    return getattr(self, f'_{colname}')
+      m = object.__getattribute__(self, "_fgetvalcast")
+      val = m(colname, val)
+    return val
   return fget
 def srdatavalfsetfactory(colname):
   def fset(self, val):
@@ -280,12 +291,16 @@ def srdatavalfsetfactory(colname):
       val = getattr(self, f'_{colname}_beforefset')(val)
     elif hasattr(self, "_beforefset"):
       val = getattr(self, "_beforefset")(colname, val)
-    setattr(self, f'_{colname}', val)
+    if val == oldval:
+      return
+    object.__setattr__(self, f'_{colname}', val)
     newval = getattr(self, colname)
     if hasattr(self, f'_{colname}_afterfset'):
-      getattr(self, f'_{colname}_afterfset')(newval, oldval)
+      m = object.__getattribute__(self, f'_{colname}_afterfset')
+      m(newval, oldval)
     elif hasattr(self, "_afterfset"):
-      getattr(self, "_afterfset")(colname, newval, oldval)
+      m = object.__getattribute__(self, "_afterfset")
+      m(colname, newval, oldval)
   return fset
 def srdatavalfdelfactory(colname):
   def fdel(self):

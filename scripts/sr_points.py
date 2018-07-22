@@ -33,6 +33,10 @@ def get_tournaments(argv):
   parameters = argv[2:]
   if get_filter(argv):
     parameters = parameters[:-1]
+  parameters = [
+      (int(p) if p.isdecimal() else p)
+      for p in parameters
+  ]
   if name.lower() in TOURNAMENTS:
     f = TOURNAMENTS[name.lower()]
     tournaments_ = f(*parameters)
@@ -56,7 +60,8 @@ def main(tournaments, filter_):
     tshown = False
     for CP in sorted(
         T.allcoachperformances,
-        key=lambda CP: CP.coach.name.lower()
+        key=lambda CP: CP.totalpoints,
+        reverse=True,
     ):
       allteams = CP.allteams
       if len(allteams) == 1 and filter_ == "multi":

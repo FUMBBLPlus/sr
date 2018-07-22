@@ -329,6 +329,198 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
 
 
+@sr.helper.srdata(None,
+    (
+        "srformatchar",
+        "rank",
+        "level",
+        "srnteams",
+    ),
+    valattrmapping = {
+        "srformatchar": [
+            "srdatasrformatchar", "apisrformatchar"
+        ],
+        "rank": [
+            "srdatarank", "groupdefaultrank",
+        ],
+        "level": [
+            "srdatalevel", "groupdefaultlevel",
+        ],
+        "srnteams": [
+            "srdatasrnteams", "schedulesrnteams",
+        ],
+    },
+)
+@sr.helper.idkey("tournament", sr.helper.NOTYPECAST)
+class SRClass(metaclass=sr.helper.InstanceRepeater):
+  SPLITTER = "/"
+  NONE = "?"
+  NON_ELIM = "N"
+  ELIM = "E"
+  FORMAT_CHARS = (NON_ELIM, ELIM)
+  # FORMAT_CHARS order is important for iselim()
+  MAJOR = "MA"
+  MINOR = "MI"
+  QUALIFIER = "QU"
+  RANKS = (MAJOR, MINOR, QUALIFIER)
+  MAX_LEVEL = 4
+
+  @classmethod
+  def _level_fgetvalcast(cls, value):
+    return int(value)
+  @classmethod
+  def _level_beforefset(cls, value):
+    value_ = int(value)
+    if value_ not in range(1, cls.MAX_LEVEL):
+      raise ValueError(f'invalid level: {value}')
+    return value_
+  @classmethod
+  def _rank_fgetvalcast(cls, value):
+    return value.upper()
+  @classmethod
+  def _rank_beforefset(cls, value):
+    value_ = value.upper()
+    if value_ not in cls.RANKS:
+      raise ValueError(f'invalid rank: {value}')
+    return value_
+  @classmethod
+  def _srformatchar_fgetvalcast(cls, value):
+    return value.upper()
+  @classmethod
+  def _srformatchar_beforefset(cls, value):
+    value_ = value.upper()
+    if value_ not in cls.FORMAT_CHARS:
+      raise ValueError(f'invalid srformatchar: {value}')
+    return value_
+  @classmethod
+  def _srnteams_fgetvalcast(cls, value):
+    if isinstance(value, str):
+      for c in "-–":
+        if c in value:
+          lower, upper = [int(x) for x in value.split(c)]
+          return range(lower, upper + 1)
+    return int(value)
+  @classmethod
+  def _srnteams_beforefset(cls, value):
+    if hasattr(value, "start") and hasattr(value, "stop"):
+      return f'{int(value.start)}-{int(value.stop) - 1}'
+    else:
+      return srt(int(value))
+
+  @classmethod
+  def join(cls, parts):
+    if parts[cls.SRData.Idx.srformatchar] == cls.ELIM:
+      N = 4
+    else:
+      N = 3
+    parts = parts[:N]
+    strparts = [
+        (cls.NONE if v is None else str(v))
+        for v in parts
+    ]
+    return cls.SPLITTER.join(strparts)
+
+  @classmethod
+  def split(cls, val):
+    result = val.split(cls.SPLITTER)
+    for i, v in enumerate(result):
+      idx = cls.SRData.Idx(i)
+      colname = idx.name
+      if v == cls.NONE:
+        result[idx] = None
+      else:
+        if hasattr(cls, f'_{colname}_fgetvalcast'):
+          v = getattr(cls, f'_{colname}_fgetvalcast')(v)
+        elif hasattr(cls, "_fgetvalcast"):
+          v = getattr(cls, "_fgetvalcast")(colname, v)
+        result[idx] = v
+    return result
+
+  def _afterfset(self, colname, newvalue, oldvalue):
+    self.tournament._srclassval = self.val
+
+  def __init__(self, tournament_instance):
+    pass  # without this instantiation raises TypeError
+
+  @property
+  def apisrformatchar(self):
+    T = self.tournament
+    et = T.group.oldapidata_tournament[T]
+    # Old API results are xml.etree.ElementTree instances
+    tournament_format = et.find("type").text
+    d = {
+        "King": self.ELIM,
+        "Knockout": self.ELIM,
+        "RoundRobin": self.NON_ELIM,
+        "Swiss": self.NON_ELIM,
+    }
+    return d[tournament_format]
+
+  @property
+  def srpointsstr(self):
+    m = list(self.srnewdata)  # self.srnewdata is tuple
+    for pclassval, pstr in sr.data["points"].items():
+      p = self.split(pclassval)  # p is list
+      if p == m:
+        return pstr
+      i = self.SRData.Idx.srnteams
+      try:
+        if p[:i] == m[:i] and m[i] in p[i]:
+          return pstr
+      except TypeError:
+        continue
+    return self.NONE
+
+  @property
+  def groupdefaultlevel(self):
+    T = self.tournament
+    if T.group:
+      return T.group.default_tournament_level
+
+  @property
+  def groupdefaultrank(self):
+    T = self.tournament
+    if T.group:
+      return T.group.default_tournament_rank
+
+  @property
+  def schedulesrnteams(self):
+    return self.tournament.schedule.srnteams
+
+  @property
+  def srdata(self):
+    # T.srclassval would result inifinte recursion
+    # (see Tournament's valattrmapping).
+    val = self.tournament.srdatasrclassval
+    if val not in (None, ...):
+      return self.split(val)
+
+  @property
+  def srnewdata(self):
+    attrs = tuple(self.SRData.Idx.__members__)
+    if not self.iselim:
+      attrs = attrs[:self.SRData.Idx.srnteams - len(attrs)]
+    return tuple(getattr(self, a) for a in attrs)
+
+  @property
+  def iselim(self):
+    return bool(self.FORMAT_CHARS.index(self.srformatchar))
+  @iselim.setter
+  def iselim(self, value):
+    self.srformatchar = self.FORMAT_CHARS[bool(value)]
+
+  @property
+  def val(self):
+    return self.join(self.srnewdata)
+
+
+
+
+_srclassattrs = set(SRClass.SRData.Idx.__members__)
+_srclassattrs.add("iselim")
+_srclassattrs.add("srpointsstr")
+
+
 
 
 @sr.helper.default_srdata_typecast
@@ -382,190 +574,6 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         return method(self, *args, **kwargs)
     return wrapper
 
-  @sr.helper.srdata(None,
-      (
-          "srformatchar",
-          "rank",
-          "level",
-          "srnteams",
-      ),
-      valattrmapping = {
-          "srformatchar": [
-              "srdatasrformatchar", "apisrformatchar"
-          ],
-          "rank": [
-              "srdatarank", "groupdefaultrank",
-          ],
-          "level": [
-              "srdatalevel", "groupdefaultlevel",
-          ],
-          "srnteams": [
-              "srdatasrnteams", "schedulesrnteams",
-          ],
-      },
-  )
-  @sr.helper.idkey("tournament", sr.helper.NOTYPECAST)
-  class SRClass(metaclass=sr.helper.InstanceRepeater):
-    SPLITTER = "/"
-    NONE = "?"
-    NON_ELIM = "N"
-    ELIM = "E"
-    FORMAT_CHARS = (NON_ELIM, ELIM)
-    # FORMAT_CHARS order is important for iselim()
-    MAJOR = "MA"
-    MINOR = "MI"
-    QUALIFIER = "QU"
-    RANKS = (MAJOR, MINOR, QUALIFIER)
-    MAX_LEVEL = 4
-
-    @classmethod
-    def _level_fgetvalcast(cls, value):
-      return int(value)
-    @classmethod
-    def _level_beforefset(cls, value):
-      value_ = int(value)
-      if value_ not in range(1, cls.MAX_LEVEL):
-        raise ValueError(f'invalid level: {value}')
-      return value_
-    @classmethod
-    def _rank_fgetvalcast(cls, value):
-      return value.upper()
-    @classmethod
-    def _rank_beforefset(cls, value):
-      value_ = value.upper()
-      if value_ not in cls.RANKS:
-        raise ValueError(f'invalid rank: {value}')
-      return value_
-    @classmethod
-    def _srformatchar_fgetvalcast(cls, value):
-      return value.upper()
-    @classmethod
-    def _srformatchar_beforefset(cls, value):
-      value_ = value.upper()
-      if value_ not in cls.FORMAT_CHARS:
-        raise ValueError(f'invalid srformatchar: {value}')
-      return value_
-    @classmethod
-    def _srnteams_fgetvalcast(cls, value):
-      if isinstance(value, str):
-        for c in "-–":
-          if c in value:
-            lower, upper = [int(x) for x in value.split(c)]
-            return range(lower, upper + 1)
-      return int(value)
-    @classmethod
-    def _srnteams_beforefset(cls, value):
-      if hasattr(value, "start") and hasattr(value, "stop"):
-        return f'{int(value.start)}-{int(value.stop) - 1}'
-      else:
-        return srt(int(value))
-
-    @classmethod
-    def join(cls, parts):
-      if parts[cls.SRData.Idx.srformatchar] == cls.ELIM:
-        N = 4
-      else:
-        N = 3
-      parts = parts[:N]
-      strparts = [
-          (cls.NONE if v is None else str(v))
-          for v in parts
-      ]
-      return cls.SPLITTER.join(strparts)
-
-    @classmethod
-    def split(cls, val):
-      result = val.split(cls.SPLITTER)
-      for i, v in enumerate(result):
-        idx = cls.SRData.Idx(i)
-        colname = idx.name
-        if v == cls.NONE:
-          result[idx] = None
-        else:
-          if hasattr(cls, f'_{colname}_fgetvalcast'):
-            v = getattr(cls, f'_{colname}_fgetvalcast')(v)
-          elif hasattr(cls, "_fgetvalcast"):
-            v = getattr(cls, "_fgetvalcast")(colname, v)
-          result[idx] = v
-      return result
-
-    def _afterfset(self, colname, newvalue, oldvalue):
-      self.tournament._srclassval = self.val
-
-    def __init__(self, tournament_instance):
-      pass  # without this instantiation raises TypeError
-
-    @property
-    def apisrformatchar(self):
-      T = self.tournament
-      et = T.group.oldapidata_tournament[T]
-      # Old API results are xml.etree.ElementTree instances
-      tournament_format = et.find("type").text
-      d = {
-          "King": self.ELIM,
-          "Knockout": self.ELIM,
-          "RoundRobin": self.NON_ELIM,
-          "Swiss": self.NON_ELIM,
-      }
-      return d[tournament_format]
-
-    @property
-    def srpointsstr(self):
-      m = list(self.srnewdata)  # self.srnewdata is tuple
-      for pclassval, pstr in sr.data["points"].items():
-        p = self.split(pclassval)  # p is list
-        if p == m:
-          return pstr
-        i = self.SRData.Idx.srnteams
-        try:
-          if p[:i] == m[:i] and m[i] in p[i]:
-            return pstr
-        except TypeError:
-          continue
-      return self.NONE
-
-    @property
-    def groupdefaultlevel(self):
-      T = self.tournament
-      if T.group:
-        return T.group.default_tournament_level
-
-    @property
-    def groupdefaultrank(self):
-      T = self.tournament
-      if T.group:
-        return T.group.default_tournament_rank
-
-    @property
-    def schedulesrnteams(self):
-      return self.tournament.schedule.srnteams
-
-    @property
-    def srdata(self):
-      # T.srclassval would result inifinte recursion
-      # (see Tournament's valattrmapping).
-      val = self.tournament.srdatasrclassval
-      if val not in (None, ...):
-        return self.split(val)
-
-    @property
-    def srnewdata(self):
-      attrs = tuple(self.SRData.Idx.__members__)
-      if not self.iselim:
-        attrs = attrs[:self.SRData.Idx.srnteams - len(attrs)]
-      return tuple(getattr(self, a) for a in attrs)
-
-    @property
-    def iselim(self):
-      return bool(self.FORMAT_CHARS.index(self.srformatchar))
-    @iselim.setter
-    def iselim(self, value):
-      self.srformatchar = self.FORMAT_CHARS[bool(value)]
-
-    @property
-    def val(self):
-      return self.join(self.srnewdata)
-
   def __init__(self, tournamentId: int):
     # Tournaments should not get instantiated directly but
     # via their groups as knowing their group is required for
@@ -589,29 +597,31 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
     return bool(self.srname or self.name)
 
   def __delattr__(self, name):
-    if name in self._srclassattrs():
+    if name in _srclassattrs:
       return delattr(self.srclass, name)
     return super().__delattr__(name)
 
   def __dir__(self):
     dir_ = list(super().__dir__())
-    dir_.extend(self._srclassattrs())
+    dir_.extend(_srclassattrs)
     dir_.extend(self.schedule.TOURNAMENT_ATTRS)
     return sorted(dir_)
 
   def __getattr__(self, name):
+    #print("__getattr__", object.__repr__(self), name)
     if name in ("_KEY", "id", "schedule"):
       # avoids infinite recursion
       # object does not have a __getattr__ method
       return super().__getattribute__(name)
-    if name in self._srclassattrs():
+    if name in _srclassattrs:
       return getattr(self.srclass, name)
     if name in self.schedule.TOURNAMENT_ATTRS:
       return getattr(self.schedule, name)
     return super().__getattribute__(name)
 
   def __setattr__(self, name, value):
-    if name in self._srclassattrs():
+    #print("__setattr__", object.__repr__(self), name, value)
+    if name in _srclassattrs:
       return setattr(self.srclass, name, value)
     return super().__setattr__(name, value)
 
@@ -722,7 +732,7 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def ismain(self):
-    if self.main is self:
+    if self.maintournamentId in {0, self.id}:
       return True
     elif self.main:
       return False
@@ -766,7 +776,22 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srclass(self):
-    return self.SRClass(self)
+    return SRClass(self)
+
+  @property
+  @_main_only
+  def srdatasrlatestexitweekNr(self):
+    if self.srdatasrexitweekNr is not None:
+      return self.srdatasrexitweekNr
+    else:
+      srenterweekNr = self.srdatasrenterweekNr
+      if srenterweekNr is not None:
+        srtitle = self.srtitle
+        if not srtitle:
+          remains = sr.settings["tournament.normal.maxremains"]
+        else:
+          remains = sr.settings["tournament.srtitle.maxremains"]
+        return srenterweekNr + remains
 
   @property
   @_main_only
@@ -920,13 +945,6 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
         return val
 
   _maintournamentId_beforefset = _maintournamentId_fgetvalcast
-
-  def _srclassattrs(self):
-    srclassattrs = list(self.SRClass.SRData.Idx.__members__)
-    srclassattrs.append("iselim")
-    srclassattrs.append("srpointsstr")
-    return srclassattrs
-
   _srname_beforefset = lambda self, val: str(val).upper()
 
 
@@ -1016,13 +1034,15 @@ def offumbblyear(fumbblyear):
 
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def ofweekNr(weekNr):
+  weekNr = int(weekNr)
   return {
       T for T in added()
       if T.main is not None
-      and T.main.srenterweekNr is not None
-      and T.main.srlatestexitweekNr is not None
+      and T.main.srdatasrenterweekNr is not None
+      and T.main.srdatasrlatestexitweekNr is not None
       and weekNr in range(
-          T.main.srenterweekNr, T.main.srlatestexitweekNr
+          T.main.srdatasrenterweekNr,
+          T.main.srdatasrlatestexitweekNr
       )
   }
 
@@ -1039,7 +1059,7 @@ def sort(tournaments, reverse=False):
           0 if t.main is None or t.main.srenterweekNr is None
           else t.main.srenterweekNr
       ),
-      (t.rank == Tournament.SRClass.MINOR),
+      (t.rank == SRClass.MINOR),
       (slot_key[t.main.srfsgname] if t.main else "?"),
       (t.main.srname if t.main else "?"),
       -t.level,
