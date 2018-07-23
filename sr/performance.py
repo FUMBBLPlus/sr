@@ -46,20 +46,6 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
             f'({self._KEY[0]}, {self._KEY[1]})'
         )
 
- #def __lt__(self, other):
- #  return (self.sort_key < other.sort_key)
- #def __le__(self, other):
- #  return (self.sort_key <= other.sort_key)
- #def __eq__(self, other):
- #  return (self.sort_key == other.sort_key)
- #def __ne__(self, other):
- #  return (self.sort_key != other.sort_key)
- #def __gt__(self, other):
- #  return (self.sort_key > other.sort_key)
- #def __ge__(self, other):
- #  return (self.sort_key >= other.sort_key)
-
-
   @property
   def alltournaments(self):
     tournaments = set(self.withqualifiers)
@@ -99,10 +85,20 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
     enterweekNr = self.tournament.srenterweekNr
     if not self.clean:
       # dirty results first with smallest points first
-      return self.clean, self.points, -enterweekNr
+      return (
+          self.clean,
+          self.totalpoints,
+          -enterweekNr,
+          self.tournamentId,
+      )
     else:
       # clean results second with highest points first
-      return self.clean, -self.points, -enterweekNr
+      return (
+          self.clean,
+          -self.totalpoints,
+          -enterweekNr,
+          self.tournamentId,
+      )
 
   @property
   def withqualifiers(self):
@@ -217,6 +213,13 @@ class CoachPerformance(BasePerformance):
     if self._points is ...:
       self._points = 0
     return self._points
+
+  @property
+  def sort_key(self):
+    return (
+        super(CoachPerformance, self).sort_key,
+        (self.coach.name.lower(),)
+    )
 
   @property
   def teamperformances(self):
@@ -416,6 +419,13 @@ class TeamPerformance(BasePerformance):
   @property
   def results(self):
     return self.tournament.schedule.results.get(self.team, [])
+
+  @property
+  def sort_key(self):
+    return (
+        super(TeamPerformance, self).sort_key,
+        (self.team.name.lower(),)
+    )
 
   @property
   def strresults(self):

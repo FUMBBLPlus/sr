@@ -114,21 +114,52 @@ class BaseSlots(metaclass=sr.helper.InstanceRepeater):
     ruleattr = self.__class__.__name__.lower()
     return getattr(self.rules[group], ruleattr)
 
-  def points(self):
+  @property
+  def nincluded(self):
     return sum(
-        P.points
+      self.N(group)
+      for group in self.rules
+      if self.rules[group].pointsincluded
+    )
+
+  @property
+  def totalpoints(self):
+    return sum(
+        P.totalpoints
         for P, (group, i) in self.performances.items()
         if self.rules[group].pointsincluded
     )
 
-  def wasted(self):
-    return sum(P.points for P in self.group[Slotgroup("W")])
+  @property
+  def pointsarray(self):
+    return sorted((
+        P.totalpoints
+        for P, (group, i) in self.performances.items()
+        if self.rules[group].pointsincluded
+    ), reverse=True)
+
+  @property
+  def sort_key(self):
+    tp = -self.totalpoints
+    pli = [-p for p in self.pointsarray]
+    nshort = self.nincluded - len(pli)
+    pli += [0] * nshort
+    return tp, tuple(pli)
+
+  def wastedpoints(self):
+    return sum(
+        P.totalpoints
+        for P in self.group[Slotgroup("W")]
+    )
+
+
 
 
 class CoachSlots(BaseSlots):
 
   def __init__(self, coachId, weekNr):
-    pass  # without this instantiation raises TypeError
+    # without this instantiation raises TypeError
+    super().__init__()
 
   @property
   def coach(self):
@@ -138,11 +169,28 @@ class CoachSlots(BaseSlots):
   def coachId(self):
     return self._KEY[0]
 
+  @property
+  def sort_key(self):
+    return (
+        super(self.__class__, self).sort_key,
+        (self.coach.name.lower().strip(), self.coach.id)
+    )
+
+
+
 
 class TeamSlots(BaseSlots):
 
-  def __init__(self, teamId, weekNr):
-    pass  # without this instantiation raises TypeError
+  def __init__(self, coachId, weekNr):
+    # without this instantiation raises TypeError
+    super().__init__()
+
+  @property
+  def sort_key(self):
+    return (
+        super(self.__class__, self).sort_key,
+        (self.team.name.lower().strip(), self.team.id)
+    )
 
   @property
   def team(self):
@@ -151,7 +199,6 @@ class TeamSlots(BaseSlots):
   @property
   def teamId(self):
     return self._KEY[0]
-
 
 
 
