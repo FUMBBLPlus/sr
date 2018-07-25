@@ -49,6 +49,11 @@ def get__coach(coachId, *, force_request=False):
   return _get_json_obj(url, force_request)
 
 
+def get__coach_search(term, *, force_request=False):
+  url = f'https://{host}/api/coach/search/{term}'
+  return _get_json_obj(url, force_request)
+
+
 def get__group_tournaments(groupId, *, force_request=False):
   url = f'https://{host}/api/group/tournaments/{groupId}'
   return _get_json_obj(url, force_request)

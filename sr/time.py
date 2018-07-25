@@ -108,6 +108,7 @@ def lasttime(weekNr):
 
 
 def lowest_enterweekNr_of_unexited():
+  weekNrs = set(sr.report.weekNrs())
   return min([
       T.srenterweekNr
       for T in sr.tournament.added()
@@ -115,7 +116,7 @@ def lowest_enterweekNr_of_unexited():
       and T.srenterweekNr
       and (
           T.srexitweekNr is None
-          or T.srexitweekNr not in sr.report.weekNrs()
+          or T.srexitweekNr not in weekNrs
       )
   ])
 

@@ -146,10 +146,11 @@ class BaseSlots(metaclass=sr.helper.InstanceRepeater):
     pli += [0] * nshort
     return tp, tuple(pli)
 
+  @property
   def wastedpoints(self):
     return sum(
         P.totalpoints
-        for P in self.group[Slotgroup("W")]
+        for P in self.group[SlotGroup("W")]
     )
 
 

@@ -38,6 +38,17 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
 
   NO_COACH = "Error:0 No such coach found."
 
+  @classmethod
+  def by_name(cls, name):
+    for coachId, (dname, *_) in sr.data["coach"].items():
+      if name == dname:
+        return cls(coachId)
+    search_result = fumbblapi.get__coach_search(name)
+    for d in search_result:
+      if name == d["name"]:
+        return cls(d["id"])
+    raise ValueError(f'unknown coach: {name}')
+
   def __init__(self, coachId: int):
     pass  # without this instantiation raises TypeError
 

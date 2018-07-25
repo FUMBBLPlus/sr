@@ -22,7 +22,7 @@ def _main_tournament_only(method):
 
 class BasePerformance(metaclass=sr.helper.InstanceRepeater):
 
-  DIRTY_RESULTS = {
+  UNCLEAN_RESULTS = {
       sr.tournament.Matchup.Result.conceded,
       sr.tournament.Matchup.Result.fortfeit,
       sr.tournament.Matchup.Result.quit,
@@ -75,7 +75,7 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
       if len(levels) < len(performances):
         self._clean = False
     if self._clean is ...:
-      unclean = bool(self.distinctresults & self.DIRTY_RESULTS)
+      unclean = bool(self.distinctresults & self.UNCLEAN_RESULTS)
       self._clean = (not unclean)
     return self._clean
 
@@ -84,7 +84,7 @@ class BasePerformance(metaclass=sr.helper.InstanceRepeater):
   def sort_key(self):
     enterweekNr = self.tournament.srenterweekNr
     if not self.clean:
-      # dirty results first with smallest points first
+      # unclean results first with smallest points first
       return (
           self.clean,
           self.totalpoints,
@@ -117,14 +117,6 @@ class CoachPerformance(BasePerformance):
       coachId: int,
   ):
     super().__init__()
-
-  @property
-  @_main_tournament_only
-  def allmatches(self):
-    return sum(
-        TP.allnummatches
-        for TP in self.allteamperformances
-    )
 
   @property
   def coach(self):
@@ -256,9 +248,8 @@ class CoachPerformance(BasePerformance):
   @_main_tournament_only
   def totalnummatches(self):
     return sum(
-        CoachPerformance(T.id, self.teamId).nummatches
-        for T in self.withqualifiers
-        if self.coach in T.coaches
+        TP.totalnummatches
+        for TP in self.allteamperformances
     )
 
   @property
@@ -383,7 +374,7 @@ class TeamPerformance(BasePerformance):
         wskip = 0
         normprog = reversed(list(enumerate(progression, 1)))
         for round_, result in normprog:
-          if result in self.DIRTY_RESULTS:
+          if result in self.UNCLEAN_RESULTS:
             wskip += 1
           elif result == sr.tournament.Matchup.Result.win:
             if wskip:
@@ -403,7 +394,7 @@ class TeamPerformance(BasePerformance):
         winpts, drawpts, losspts = parts2
         pts = initialpts
         for result in self.progression:
-          if result in self.DIRTY_RESULTS:
+          if result in self.UNCLEAN_RESULTS:
             pts -= winpts + drawpts
           elif result == sr.tournament.Matchup.Result.win:
             pts += winpts

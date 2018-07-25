@@ -954,6 +954,7 @@ def added():
       Tournament(tournamentId)
       for tournamentId in sr.data[Tournament.SRData.name]
   }
+added()  # this chains sr-data tournaments
 
 
 def all_():

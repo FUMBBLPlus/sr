@@ -149,9 +149,10 @@ def bbcexitdate(tournament):
       fstr = '{} →'
   if w is None:
     return " "
-  if w in sr.report.weekNrs():
+  reportNr = sr.report.weekNrs().get(w)
+  if reportNr:
     assert known
-    report = sr.report.Report(w)
+    report = sr.report.Report(reportNr)
     datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
     return bbcreport(report, datestr)
   else:

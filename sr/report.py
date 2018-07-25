@@ -1,10 +1,24 @@
+import collections
+
 import sr
 
 
-@sr.helper.idkey("weekNr")
+@sr.helper.idkey("nr")
 class Report(metaclass=sr.helper.InstanceRepeater):
 
-  def __init__(self, weekNr: int):
+  RankingsRow = collections.namedtuple(
+      "RankingsRow",
+      ["rownum", "nr", "slotobj"]
+  )
+
+  @classmethod
+  def _get_key(cls, nr):
+    nr = int(nr)
+    # next line raises KeyError for nonexisting reports
+    weekNr = reportNrs()[nr]
+    return nr
+
+  def __init__(self, nr: int):
     self._coachrankings = None
     self._teamrankings = None
 
@@ -20,14 +34,14 @@ class Report(metaclass=sr.helper.InstanceRepeater):
         S.add(P)
       setattr(self, attr, {})
       prev_sort_key = None
-      n = 0
-      for k, S in enumerate(getattr(self, slotsattr), 1):
+      nr = 0
+      for rownum, S in enumerate(getattr(self, slotsattr), 1):
         A = getattr(S, name)
         this_sort_key = S.sort_key[0]
         # sort_key[1] are names which are no tiebreakers
         if this_sort_key != prev_sort_key:
-          n = k
-        getattr(self, attr)[A] = k, n, S
+          nr = rownum
+        getattr(self, attr)[A] = self.RankingsRow(rownum, nr, S)
         prev_sort_key = this_sort_key
     return getattr(self, attr)
 
@@ -54,7 +68,6 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   def coachrankings(self):
     return self._rankings("coach")
 
-
   @property
   def date(self):
     return sr.time.firstdate(self.weekNr)
@@ -68,8 +81,13 @@ class Report(metaclass=sr.helper.InstanceRepeater):
     return sr.tournament.enters(self.weekNr)
 
   @property
-  def nr(self):
-    return weekNrs().index(self.weekNr) + 1
+  def prevnext(self):
+    p, n = None, None
+    if self.nr - 1 in reportNrs():
+      p = self.__class__(self.nr - 1)
+    if self.nr + 1 in reportNrs():
+      n = self.__class__(self.nr + 1)
+    return p, n
 
   @property
   def tournaments(self):
@@ -102,19 +120,21 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   def teamrankings(self):
     return self._rankings("team")
 
+  @property
+  def weekNr(self):
+    return reportNrs()[self.nr]
 
 
 
 def current_report():
-  return Report(sr.time.current_weekNr())
+  return Report(weekNrs()[sr.time.current_weekNr()])
 
 
 
-
-_weekNrs = ...
+_weekNrs_reportNrs = ...
 def weekNrs(*, rebuild=False):
-  global _weekNrs
-  if _weekNrs is ... or rebuild:
+  global _weekNrs_reportNrs
+  if _weekNrs_reportNrs is ... or rebuild:
     r = set()
     # reports are based on (srdata) added tournaments
     for T in sr.tournament.added():
@@ -122,7 +142,14 @@ def weekNrs(*, rebuild=False):
         r.add(T.srenterweekNr)
         if T.srexitweekNr is not None:
           r.add(T.srexitweekNr)
-    max_weekNr = sr.time.current_weekNr() + 1
-    _weekNrs = tuple(sorted({w for w in r if w <= max_weekNr}))
-  return _weekNrs
-
+    max_weekNr = sr.time.current_weekNr()
+    weekNrs_ = tuple(sorted({w for w in r if w <= max_weekNr}))
+    _weekNrs_reportNrs = ({},{})
+    for nr, weeknr in enumerate(weekNrs_, 1):
+      _weekNrs_reportNrs[0][weeknr] = nr
+      _weekNrs_reportNrs[1][nr] = weeknr
+  return _weekNrs_reportNrs[0]
+def reportNrs(*, rebuild=False):
+  if _weekNrs_reportNrs is ... or rebuild:
+    weekNrs(rebuild=rebuild)
+  return _weekNrs_reportNrs[1]
