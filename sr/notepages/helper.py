@@ -91,7 +91,7 @@ class FUMBBLYearNotePage(NotePage):
   @property
   def reports(self):
     return sorted(
-        (sr.report.Report(w) for w in self.weekNrs),
+        (sr.report.Report.ofweekNr(w) for w in self.weekNrs),
         reverse = True,
     )
 
@@ -126,7 +126,7 @@ def bbcenterdate(tournament):
   if not T.ismain:
     return ""
   if T.main.srenterweekNr is not None:
-    report = sr.report.Report(T.main.srenterweekNr)
+    report = sr.report.Report.ofweekNr(T.main.srenterweekNr)
     datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
     return bbcreport(report, datestr)
   else:

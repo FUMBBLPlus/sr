@@ -18,6 +18,12 @@ class Report(metaclass=sr.helper.InstanceRepeater):
     weekNr = reportNrs()[nr]
     return nr
 
+  @classmethod
+  @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
+  def ofweekNr(cls, weekNr):
+    nr = weekNrs()[weekNr]
+    return cls(nr)
+
   def __init__(self, nr: int):
     self._coachrankings = None
     self._teamrankings = None
@@ -127,7 +133,7 @@ class Report(metaclass=sr.helper.InstanceRepeater):
 
 
 def current_report():
-  return Report(weekNrs()[sr.time.current_weekNr()])
+  return Report.ofweekNr()
 
 
 
@@ -142,7 +148,7 @@ def weekNrs(*, rebuild=False):
         r.add(T.srenterweekNr)
         if T.srexitweekNr is not None:
           r.add(T.srexitweekNr)
-    max_weekNr = sr.time.current_weekNr()
+    max_weekNr = sr.time.current_weekNr() + 1
     weekNrs_ = tuple(sorted({w for w in r if w <= max_weekNr}))
     _weekNrs_reportNrs = ({},{})
     for nr, weeknr in enumerate(weekNrs_, 1):

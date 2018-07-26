@@ -14,8 +14,6 @@ INPUT_PROMPT = sr.helper.INPUT_PROMPT
 
 inpcodes = None
 
-srtitles = sr.tournament.srtitles()
-
 
 def enter_info(T):
   enterweekNr = T.srenterweekNr
@@ -272,18 +270,32 @@ def input_srtitle(T):
     ):
       break
     elif I in ("LIST", "<LIST>"):
-      print("; ".join(sorted(srtitles)))
+      print("; ".join(sorted(sr.tournament.srtitles())))
       continue
-    elif i in ("-", "NONE", "<NONE>"):
+    elif I in ("-", "NONE", "<NONE>"):
       I = ""
     elif I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     else:
-      if I not in srtitles:
-        text = 'Are you shure to add a new title? (Y/N)'
+      if I not in sr.tournament.srtitles():
+        text = 'Are you sure to add a new title? (Y/N)'
         if not input_yesno(text):
           continue
     T.srtitle = I
+    if T.srtitle and T.srenterweekNr is not None:
+      tournaments = {
+          T2 for T2 in sr.tournament.added()
+          if T2.ismain
+          and T2.srtitle == T.srtitle
+          and T2.srexitweekNr is None
+          and T2 is not T
+      }
+      if tounaments:
+        print(
+            "Please review unfinalized tournaments "
+            "with same title!"
+        )
+        edit_tournaments(tournaments)
     break
 
 
@@ -489,7 +501,7 @@ def edit_searched_tournaments():
     if I in ("1", "NAME"):
       name_pattern = input_string("Name")
       tournaments = {
-          T for T in sr.tournament.all()
+          T for T in sr.tournament.all_()
           if re.match(name_pattern, T.srname)
       }
       edit_tournaments(tournaments)

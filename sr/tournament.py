@@ -266,7 +266,10 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def srnteams(self):
-    return len({team for team in self.round_teams(1) if team})
+    val = len({team for team in self.round_teams(1) if team})
+    if val == 0:
+      val = None
+    return val
 
   @property
   def srrounds(self):
@@ -493,7 +496,7 @@ class SRClass(metaclass=sr.helper.InstanceRepeater):
     # (see Tournament's valattrmapping).
     val = self.tournament.srdatasrclassval
     if val not in (None, ...):
-      return self.split(val)
+      return tuple(self.split(val))
 
   @property
   def srnewdata(self):
@@ -545,7 +548,7 @@ _srclassattrs.add("srpointsstr")
         ],
         "srname": ["srdatasrname", "name"],
         "srclassval": [
-            "srdatasrclassval", "_srclassdotval"
+            "_srclassdotval",
         ],
         "srtitle": [
             "srdatasrtitle", "groupdefaultsrtitle",
