@@ -12,12 +12,16 @@ postqueue = collections.deque()
 timefmt = sr.time.ISO_DATE_FMT + " " + sr.time.ISO_TIME_FMT_M
 
 
+def queue_mainpage():
+  module = sr.notepages.page["SR"]
+  postqueue.append((module.NotePage, {"updated": now}))
+
 def queue_tournamentspage_added():
   queue_tournamentspage_custom(*sr.time.fumbblyears())
 
 def queue_tournamentspage_unfinalized():
   W = sr.time.lowest_enterweekNr_of_unexited()
-  Y = sr.time.fumbblyear(w)
+  Y = sr.time.fumbblyear(W)
   fumbblyears = [y for y in sr.time.fumbblyears() if Y <= y]
   queue_tournamentspage_custom(*fumbblyears)
 
@@ -28,20 +32,36 @@ def queue_tournamentspage_custom(*fumbblyears):
       for y in fumbblyears
   ])
 
+def queue_tournamentspage_pending():
+  module = sr.notepages.page["SR-Tournaments-Pending"]
+  postqueue.append((module.NotePage, {}))
+
+
 def postall():
   while postqueue:
     postone()
 
 def postone():
   notepageobj, kwargs = postqueue.popleft()
-  print(f'{notepageobj.link}...', end="\r")
+  print(f'Posting {notepageobj.link}...', end="\r")
   sys.stdout.flush()
   notepageobj.post(**kwargs)
-  print(f'{notepageobj.link}   ')
+  print(f'Posting {notepageobj.link} [DONE]')
   sys.stdout.flush()
 
 
-def post_tournaments_page():
+def post_after_turn_time():
+  queue_tournamentspage_unfinalized()
+  queue_tournamentspage_pending()
+  queue_mainpage()
+  postall()
+
+def post_mainpage():
+  queue_mainpage()
+  postall()
+
+
+def post_tournamentspage():
   print("Which tournaments pages?")
   options = {
     "a": (
@@ -56,53 +76,56 @@ def post_tournaments_page():
         "custom",
         lambda: queue_tournamentspage_custom(
             *sr.helper.FumbblyearsInput("fumbblyear(s)")()
-        )
+        ),
     ),
-    "e": ("exit", lambda: None)
+    "p": (
+        "pending",
+        queue_tournamentspage_pending,
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
   }
   for o, (message, f) in options.items():
     print(f'  {o.upper()}: {message}')
-  sr.helper.CallerInput(
+  response = sr.helper.CallerInput(
       options = {o: f for o, (message, f) in options.items()},
   )()
   postall()
 
 
 def main():
+  options = {
+    "a": (
+        "post all pages after turn time",
+        post_after_turn_time,
+    ),
+    "m": (
+        "post mainpage",
+        post_mainpage,
+    ),
+    "t": (
+        "post tournaments page(s)",
+        post_tournamentspage,
+    ),
+    "q": ("quit", lambda: "<QUIT>")
+  }
   while True:
     print("Options:")
-    print("  1: post new report")
-    print("  T: post tournaments page")
-    print("  Q: quit")
-    while True:
-      I = input(sr.helper.Input.prompt).strip().upper()
-      if I in ("T", "TOURNAMENTS", "TOURNAMENTS PAGE"):
-        post_tournaments_page()
-        break
-      elif I in ("Q", "QUIT"):
-        return
+    for o, (message, f) in options.items():
+      print(f'  {o.upper()}: {message}')
+    response = sr.helper.CallerInput(
+        options = {
+            o: f
+            for o, (message, f) in options.items()
+        },
+    )()
+    if response == "<QUIT>":
+      break
 
 
-  print("Please wait...")
-  now = sr.time.now()
 
-  ps = []
-  post_kwargs = {}
-  ps.extend(sr.notepages.page["SR-Tournaments-Y__"].toupdate())
-  ps.append(
-      sr.notepages.page["SR-Tournaments-Pending"].NotePage
-  )
-  ps.append(
-      sr.notepages.page["SR"].NotePage
-  )
-  post_kwargs["SR"] = {"updated": now}
-  for P in ps:
-    print(f'{P.link}...', end="\r")
-    sys.stdout.flush()
-    P.post(**(post_kwargs.get(P.link, {})))
-    print(f'{P.link}   ')
-    sys.stdout.flush()
-  print(f'Updated at {now.strftime(timefmt)}')
 
 
 if __name__ == "__main__":
