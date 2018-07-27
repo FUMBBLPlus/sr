@@ -10,8 +10,6 @@ import sys
 import sr
 
 
-INPUT_PROMPT = sr.helper.INPUT_PROMPT
-
 inpcodes = None
 
 
@@ -48,11 +46,6 @@ def inpcode_removing(impcode):
   return real_decorator
 
 
-input_integer = sr.helper.input_integer
-input_string = sr.helper.input_string
-input_yesno = sr.helper.input_yesno
-
-
 @inpcode_removing(1000)
 def input_srname(T):
   print('SR Standard Tournament Name?')
@@ -64,7 +57,7 @@ def input_srname(T):
   print(f'  <Enter>: unchange ("{T.srname}")')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I.startswith("LIST"):
       n = I[4:]
       if not n:
@@ -92,7 +85,7 @@ def input_main(T):
   print(f'  <Enter>: unchange ({T.maintournamentId})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     elif I in ("0", "THIS", "<THIS>"):
@@ -115,7 +108,7 @@ def input_formatchar(T):
   print(f'  <Enter>: unchange ({T.srformatchar})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     elif I in ("E", "ELIMINATION"):
@@ -139,7 +132,7 @@ def input_rank(T):
   print(f'  <Enter>: unchange ({T.rank})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     elif I in ("MI", "MINOR"):
@@ -166,7 +159,7 @@ def input_level(T):
   print(f'  <Enter>: unchange ({T.level})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     elif I.isdecimal():
@@ -207,7 +200,7 @@ def input_qualifiers(T):
   for T2 in sr.tournament.main_unknown():
     if T2.level and T.level <= T2.level:
       continue
-    if input_yesno(f'{T2.srname} ({T2.id}))'):
+    if sr.helper.YesNoInput(f'{T2.srname} ({T2.id}))')():
       T2.main = T
       if T2.level is None and T.level == 2:
         T2.level = 1
@@ -221,7 +214,7 @@ def input_srnteams(T):
   print(f'  <Enter>: unchange ({T.srnteams})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("?", "UNKNOWN", "<UNKNOWN>"):
       I = None
     elif I.isdecimal():
@@ -246,7 +239,7 @@ def input_srclass(T):
   print('  <Enter>: none')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I not in accepted:
       continue
     if I != "":
@@ -264,7 +257,7 @@ def input_srtitle(T):
   print(f'  <Enter>: unchanged ("{T.srtitle}")')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in (
         "", "ENTER", "<ENTER>", "UNCHANGED", "<UNCHANGED>"
     ):
@@ -279,7 +272,7 @@ def input_srtitle(T):
     else:
       if I not in sr.tournament.srtitles():
         text = 'Are you sure to add a new title? (Y/N)'
-        if not input_yesno(text):
+        if not sr.helper.YesNoInput(text)():
           continue
     T.srtitle = I
     if T.srtitle and T.srenterweekNr is not None:
@@ -310,7 +303,7 @@ def input_srfsgname(T):
   print(f'  <Enter>: unchanged ("{T.srfsgname}")')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in (
         "", "ENTER", "<ENTER>", "UNCHANGED", "<UNCHANGED>"
     ):
@@ -338,7 +331,7 @@ def input_srenter(T):
   print(f'  <Enter>: unchanged ({enter_info(T)})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in (
         "", "ENTER", "<ENTER>", "UNCHANGED", "<UNCHANGED>"
     ):
@@ -366,7 +359,7 @@ def input_srexit(T):
   print(f'  <Enter>: unchanged ({exit_info(T)})')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in (
         "", "ENTER", "<ENTER>", "UNCHANGED", "<UNCHANGED>"
     ):
@@ -401,7 +394,7 @@ def input_tournamentdone(T):
   print('  <Enter>: done')
   sys.stdout.flush()
   while True:
-    I = input(INPUT_PROMPT).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("", "ENTER", "<ENTER>", "DONE", "<DONE>"):
       break
     elif I in ("1", "NAME"):
@@ -497,21 +490,23 @@ def edit_searched_tournaments():
   print("  3: tournamentId")
   print("  E: exit")
   while True:
-    I = input(INPUT_PROMPT ).strip().upper()
+    I = input(sr.helper.Input.prompt).strip().upper()
     if I in ("1", "NAME"):
-      name_pattern = input_string("Name")
+      name_pattern = sr.helper.Input("Name")()
       tournaments = {
           T for T in sr.tournament.all_()
           if re.match(name_pattern, T.srname)
       }
       edit_tournaments(tournaments)
     elif I in ("2", "GROUP", "GROUPID", "GROUP ID"):
-      group = sr.group.Group(input_integer("groupId"))
+      group = sr.group.Group(
+          sr.helper.IntegerInput("groupId")()
+      )
       edit_tournaments(group.tournaments)
     elif I in (
         "3", "TOURNAMENT", "TOURNAMENTID", "TOURNAMENT ID"
     ):
-      tournamentId = input_integer("tournamentId")
+      tournamentId = sr.helper.IntegerInput("tournamentId")()
       tournament = sr.tournament.Tournament(tournamentId)
       edit_tournaments([tournament])
     elif I not in ("E", "EXIT"):
@@ -569,7 +564,7 @@ def main():
     print("  S: save and quit")
     print("  Q: quit without saving")
     while True:
-      I = input(INPUT_PROMPT ).strip().upper()
+      I = input(sr.helper.Input.prompt).strip().upper()
       if I in ("1", "EDIT", "EDIT CHANGED", "CHANGED"):
         edit_tournaments()
         print()

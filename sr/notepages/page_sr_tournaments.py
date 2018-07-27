@@ -87,7 +87,7 @@ class NotePage(helper.FUMBBLYearNotePage):
     )
 
 
-def all():
+def all_():
   return [
       NotePage.of_fumbblyear(y)
       for y in list(sr.time.fumbblyears())
@@ -97,4 +97,4 @@ def all():
 def toupdate():
   w = sr.time.lowest_enterweekNr_of_unexited()
   y = sr.time.fumbblyear(w)
-  return [wp for wp in all() if y <= wp.fumbblyear]
+  return [wp for wp in all_() if y <= wp.fumbblyear]

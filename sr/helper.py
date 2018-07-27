@@ -2,9 +2,11 @@ import enum
 import functools
 import getpass
 import inspect
+import re
 
 
 import sr
+from . import roman
 
 
 try:
@@ -323,24 +325,121 @@ def default_srdata_typecast(cls):
   return cls
 
 
-def input_integer(text):
-  while True:
-    I = input(f'{text} {INPUT_PROMPT}').strip()
-    if I.isdecimal():
-      return int(I)
 
 
-def input_string(text):
-  return input(f'{text} {INPUT_PROMPT}').strip()
+class Input:
+
+  prompt = ":: "
+
+  def __init__(self, message="", response=None):
+    self.exc = []
+    self.message = message
+    self.prevresponse = None
+    self.response = response
+
+  def __call__(self):
+    while self.response is None:
+      self.response = input(self.input_message())
+      try:
+        return self.process()
+      except (IndexError, KeyError, ValueError) as exc:
+        self.exc.append(exc)
+        pass
+      self.prevresponse = self.response
+      self.response = None
+
+  def input_message(self):
+    message = self.message
+    if self.prompt is not None:
+      message += (" " if message else "") + self.prompt
+    return message
+
+  def process(self):
+    return self.response.strip()
 
 
-def input_yesno(text):
-  while True:
-    I = input(f'{text} {INPUT_PROMPT}').strip().upper()
-    if I in ("Y", "YES"):
-      return True
-    elif I in ("N", "NO"):
-      return False
+class IntegerInput(Input):
+
+  def process(self):
+    return int(Input.process(self))
+
+
+class IntegersInput(Input):
+
+  re_dividers = ","
+  re_range_dividers = r'\s?[\-\-\—]\s?'
+  subinputcls = IntegerInput
+
+  def process(self):
+    I0 = Input.process(self)
+    I1 = re.split(self.re_dividers, I0)
+    I2 = [s.strip() for s in I1 if s.strip()]
+    print(I2)
+    def subgen():
+      for s in I2:
+        s2 = re.split(self.re_range_dividers, s, 1)
+        print(s2)
+        if len(s2) == 2:
+          s2 = [
+              self.subinputcls(response=s).process()
+              for s in s2
+          ]
+          s2[-1] += 1
+          yield from range(*s2)
+        else:
+          yield self.subinputcls(response=s).process()
+    return list(subgen())
+
+
+class FumbblyearInput(IntegerInput):
+
+  def process(self):
+    try:
+      val = int(super().process())
+    except ValueError:
+      val = roman.from_roman(Input.process(self))
+    sr.time.fumbblyears()[val]  # raises KeyError if not exists
+    return val
+
+
+class FumbblyearsInput(IntegersInput):
+  subinputcls = FumbblyearInput
+
+
+class OptionsInput(Input):
+
+  case_sensitive = False
+  options = {}
+
+  def __init__(self, *args, **kwargs):
+    if "options" in kwargs:
+      self.options = kwargs["options"]
+      del kwargs["options"]
+    super().__init__(*args, **kwargs)
+
+  def process(self):
+    I = Input.process(self)
+    if not self.case_sensitive:
+      I = I.lower()
+    return self.options[I]
+
+
+class YesNoInput(OptionsInput):
+
+  options = {
+      "y": True,
+      "yes": True,
+      "n": False,
+      "no": False,
+  }
+
+
+class CallerInput(OptionsInput):
+
+  def process(self):
+    f = super().process()
+    return f()
+
 
 
 def ensure_logged_in(interactive=True):
