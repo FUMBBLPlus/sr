@@ -26,7 +26,7 @@ def queue_tournamentspage_unfinalized():
   queue_tournamentspage_custom(*fumbblyears)
 
 def queue_tournamentspage_custom(*fumbblyears):
-  module = sr.notepages.page["SR-Tournaments-Y__"]
+  module = sr.notepages.page["SR-Tournaments-Yn"]
   postqueue.extend([
       (module.NotePage.of_fumbblyear(y), {})
       for y in fumbblyears

@@ -6,8 +6,15 @@ from . import helper
 
 class NotePage(helper.FUMBBLYearNotePage):
 
-  KEY = "SR-Tournaments-Y__"
+  KEY = "SR-Tournaments-Yn"
   NAME = "Tournaments"
+
+  def content(self):
+    return super().content(
+        date = self.date,
+        title = self.title2,
+        table = self.table,
+    )
 
   @property
   def date(self):
@@ -18,20 +25,6 @@ class NotePage(helper.FUMBBLYearNotePage):
       return f'from {fromdatestr} to {todatestr}'
     else:
       return f'from {fromdatestr}'
-
-  @property
-  def title2(self):
-    return (
-        "OBC Sport SR Rankings Tournaments of FUMBBL Year "
-        f'{roman.to_roman(self.fumbblyear)}'
-    )
-
-  @property
-  def tournaments(self):
-    return sr.tournament.sort(
-        sr.tournament.offumbblyear(self.fumbblyear),
-        reverse=True,
-    )
 
   @property
   def table(self):
@@ -79,12 +72,21 @@ class NotePage(helper.FUMBBLYearNotePage):
         widths=widths,
     )
 
-  def content(self):
-    return super().content(
-        date = self.date,
-        title = self.title2,
-        table = self.table,
+  @property
+  def title2(self):
+    return (
+        "OBC Sport SR Rankings Tournaments of FUMBBL Year "
+        f'{roman.to_roman(self.fumbblyear)}'
     )
+
+  @property
+  def tournaments(self):
+    return sr.tournament.sort(
+        sr.tournament.offumbblyear(self.fumbblyear),
+        reverse=True,
+    )
+
+
 
 
 def all_():

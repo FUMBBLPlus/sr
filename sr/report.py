@@ -68,6 +68,7 @@ class Report(metaclass=sr.helper.InstanceRepeater):
     return sorted({
         sr.slot.CoachSlots(C.id, self.weekNr)
         for C in self.coaches
+        if C
     }, key=lambda CS: CS.sort_key)
 
   @property
@@ -77,6 +78,12 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   @property
   def date(self):
     return sr.time.firstdate(self.weekNr)
+
+  @property
+  def enddate(self):
+    p, n = self.prevnext
+    if n:
+      return n.date - sr.time.ONEDAY
 
   @property
   def enters(self):
@@ -120,6 +127,7 @@ class Report(metaclass=sr.helper.InstanceRepeater):
     return sorted({
         sr.slot.TeamSlots(Te.id, self.weekNr)
         for Te in self.teams
+        if Te
     }, key=lambda TS: TS.sort_key)
 
   @property

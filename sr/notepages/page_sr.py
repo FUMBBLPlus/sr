@@ -17,7 +17,7 @@ class NotePage(helper.NotePage):
     fumbblyears = sorted(sr.time.fumbblyears(), reverse=True)
     rnote = sr.notepages.page["SR-Reports-Y__"].NotePage
     reports = [rnote.of_fumbblyear(y) for y in fumbblyears]
-    tnote = sr.notepages.page["SR-Tournaments-Y__"].NotePage
+    tnote = sr.notepages.page["SR-Tournaments-Yn"].NotePage
     tournaments = [tnote.of_fumbblyear(y) for y in fumbblyears]
     kwargs["reports"] = "\n | \\\n".join(
         f'[url={p.url}]{roman.to_roman(p.fumbblyear)}[/url]\\'

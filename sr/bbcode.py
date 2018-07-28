@@ -23,6 +23,10 @@ def right(text):
   return f'[block=right]{text}[/block]'
 
 
+def size(content, size=10):
+  return f'[size={size}]{content}[/size]'
+
+
 def table(
     rows,
     *,
@@ -72,7 +76,3 @@ def url(url, name=None):
   if name is None:
     return f'[url]{url}[/url]'
   return f'[url={url}]{name}[/url]'
-
-
-
-

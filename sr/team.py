@@ -17,7 +17,12 @@ import sr
         "rosterId": [
             "_fillerval", "srdatarosterId", "apirosterId"
         ],
-        "name": ["_fillername", "srdataname", "apiname"],
+        "name": [
+            "_fillername",
+            "srdataname",
+            "apiname",
+            "_someteamname",
+        ],
     }
 )
 @sr.helper.idkey
@@ -44,6 +49,10 @@ class Team(metaclass=sr.helper.InstanceRepeater):
   @property
   def _fillername(self):
     return (..., "* Filler *")[self.isfiller]
+
+  @property
+  def _someteamname(self):
+    return "* Some Team *"
 
   @property
   def apidata(self):
@@ -74,6 +83,14 @@ class Team(metaclass=sr.helper.InstanceRepeater):
       return sr.coach.Coach(self.coachId)
     elif not self.isfiller:
       return sr.coach.SomeCoach()
+
+  @property
+  def fullhttp(self):
+    return f'https://{fumbblapi.host}{self.http}'
+
+  @property
+  def http(self):
+    return f'/p/team?op=view&team_id={self.id}'
 
   @property
   def isfiller(self):

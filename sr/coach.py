@@ -67,6 +67,17 @@ class Coach(metaclass=sr.helper.InstanceRepeater):
       pass
     return ...
 
+  @property
+  def fullhttp(self):
+    return f'https://{fumbblapi.host}{self.http}'
+
+  @property
+  def http(self):
+    return f'/~{self.name}'
+
+
+
+
 
 def iter_referenced():
   yield from Coach.__members__.values()

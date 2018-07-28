@@ -70,8 +70,9 @@ class FUMBBLYearNotePage(NotePage):
 
   NAME = None
 
-  def __init__(self, fumbblyear):
+  def __init__(self, link):
     self._weekNrs = ...
+    super().__init__(link)
 
   @classmethod
   def of_fumbblyear(cls, fumbblyear):
@@ -119,7 +120,11 @@ class FUMBBLYearNotePage(NotePage):
 
 
 
-
+def bbccoach(coach):
+  if coach:
+    return bbcode.url(coach.http, coach.name)
+  else:
+    return coach.name
 
 def bbcenterdate(tournament):
   T = tournament
@@ -177,6 +182,12 @@ def bbcnteams(tournament):
   if tournament.iselim:
     return str(tournament.srnteams)
   return ""
+
+def bbcteam(team):
+  if team:
+    return bbcode.url(team.http, team.name)
+  else:
+    return team.name
 
 def bbctournament(
     tournament,
