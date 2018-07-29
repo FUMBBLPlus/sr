@@ -159,7 +159,7 @@ class NotePage(helper.NotePage):
         ),
         coachuppertable = self.coachtable(
             nrrange = range(1, 101),
-            ptsrange = range(100, 999999999),
+            ptsrange = range(25, 999999999),
         ),
         date = self.date,
         nextreportlink = self.nextreportlink,
@@ -168,7 +168,6 @@ class NotePage(helper.NotePage):
         title = self.title2,
         teamlowertable = self.teamtable(
             nrrange = range(26, 999999999),
-
             rosterialnrrange = range(1, 4),
         ),
         teamuppertable = self.teamtable(
@@ -183,6 +182,7 @@ class NotePage(helper.NotePage):
         tournamentnrrange = range(1, 999999999),
         rosterialnrrange = range(1, 999999999),
     ):
+    print(nrrange)
     header=[
         "Nr",
         "Move",
@@ -207,6 +207,7 @@ class NotePage(helper.NotePage):
         rosterials[roster] = []
       rosterials[roster].append(Te)
       rosterialnr = len(rosterials[roster])
+      print(Te, roster, rosterialnr)
       if R.nr not in nrrange:
         continue
       if rosterialnr not in rosterialnrrange:
@@ -255,13 +256,14 @@ class NotePage(helper.NotePage):
       rows.append([
           nr, move, team, roster, coach, P, PΔ, Pw, T, G
       ])
+      print("append")
     align="CCLLLCCCCC"
     widths = [
         "46px",
         "46px",
-        "230x",
-        "150x",
-        "170x",
+        "230px",
+        "150px",
+        "170px",
         "46px",
         "55px",
         "55px",
