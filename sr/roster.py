@@ -20,6 +20,9 @@ class SomeRoster:
   def name(self):
     return str(self)
 
+  def nameofweek(self, weekNr=None):
+    return self.name
+
 
 
 

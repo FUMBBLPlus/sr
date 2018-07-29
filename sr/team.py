@@ -36,6 +36,8 @@ class Team(metaclass=sr.helper.InstanceRepeater):
   def __bool__(self):
     if self.isfiller:
       return False
+    elif self.srdataname is None:
+      return False
     else:
       return bool(self.name)
 
