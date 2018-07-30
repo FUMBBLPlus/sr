@@ -85,10 +85,10 @@ class NotePage(helper.NotePage):
         "T",
         "G",
     ]
-    rankings = self.report.coachrankings  # differs
+    rankings = self.report.coachrankings
     rows = []
     prevnr = None
-    for C in sorted(rankings, key=rankings.get):  # differs
+    for C in sorted(rankings, key=rankings.get):
       R = rankings[C]  # differs
       if R.nr not in nrrange:
         continue
@@ -182,7 +182,6 @@ class NotePage(helper.NotePage):
         tournamentnrrange = range(1, 999999999),
         rosterialnrrange = range(1, 999999999),
     ):
-    print(nrrange)
     header=[
         "Nr",
         "Move",
@@ -207,7 +206,6 @@ class NotePage(helper.NotePage):
         rosterials[roster] = []
       rosterials[roster].append(Te)
       rosterialnr = len(rosterials[roster])
-      print(Te, roster, rosterialnr)
       if R.nr not in nrrange:
         continue
       if rosterialnr not in rosterialnrrange:
@@ -256,7 +254,6 @@ class NotePage(helper.NotePage):
       rows.append([
           nr, move, team, roster, coach, P, PΔ, Pw, T, G
       ])
-      print("append")
     align="CCLLLCCCCC"
     widths = [
         "46px",
