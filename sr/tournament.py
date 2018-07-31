@@ -186,39 +186,41 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
             if not Te.isfiller
         }
         quitters = set()
-        for r in range(1, self.rounds + 1):
-          for m in {m for m in self.matchups if m.round == r}:
-            for Te, result_ in m.results.items():
-              d[Te][r-1] = result_
-          # Now I have to look for quitters
-          if 1 < r:
-            for Te, results_ in d.items():
-              if Te in quitters:
-                continue
-              prev, this = results_[r-2:r]
-              if this != Matchup.Result.none:
-                continue
-              # Replacement teams should not get treated as
-              # quitters before their first participation.
-              for r2, result2 in enumerate(results_, 1):
-                if result2 != Matchup.Result.none:
-                  break
-              if r <= r2:
-                continue
-              # For non-elimination tournament, no participation
-              # in a round is considered a quit.
-              # For elimination tournaments the previous round
-              # should be checked.
-              if (
-                  not self.tournament.iselim
-                  or prev in {
-                      Matchup.Result.win,
-                      Matchup.Result.bye,
-                      Matchup.Result.fillerbye,
-                  }
-              ):
-                d[Te][r-1] = Matchup.Result.quit
-                quitters.add(Te)
+        rounds = self.rounds
+        if rounds is not None:
+          for r in range(1, rounds + 1):
+            for m in {m for m in self.matchups if m.round == r}:
+              for Te, result_ in m.results.items():
+                d[Te][r-1] = result_
+            # Now I have to look for quitters
+            if 1 < r:
+              for Te, results_ in d.items():
+                if Te in quitters:
+                  continue
+                prev, this = results_[r-2:r]
+                if this != Matchup.Result.none:
+                  continue
+                # Replacement teams should not get treated as
+                # quitters before their first participation.
+                for r2, result2 in enumerate(results_, 1):
+                  if result2 != Matchup.Result.none:
+                    break
+                if r <= r2:
+                  continue
+                # For non-elimination tournament, no
+                # participation in a round is considered a quit.
+                # For elimination tournaments the previous round
+                # should be checked.
+                if (
+                    not self.tournament.iselim
+                    or prev in {
+                        Matchup.Result.win,
+                        Matchup.Result.bye,
+                        Matchup.Result.fillerbye,
+                    }
+                ):
+                  d[Te][r-1] = Matchup.Result.quit
+                  quitters.add(Te)
       self._results = d
     return self._results
 
@@ -237,7 +239,10 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
   @property
   def rounds(self):
     if self.tournament.iselim:
-      p = max({matchup.position for matchup in self.matchups})
+      ps = {matchup.position for matchup in self.matchups}
+      if not ps:
+        return
+      p = max(ps)
       # p=1 for final; 3 for semi-final; 7 for quaterfinal; etc.
       return int(math.log(p + 1, 2))
     else:

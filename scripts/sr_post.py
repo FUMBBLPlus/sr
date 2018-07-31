@@ -73,7 +73,6 @@ def postall():
 
 def postone():
   notepageobj, kwargs = postqueue.popleft()
-  print(notepageobj, kwargs)
   print(f'Posting {notepageobj.link}...', end="\r")
   sys.stdout.flush()
   notepageobj.post(**kwargs)

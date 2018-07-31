@@ -480,7 +480,14 @@ def save():
   for T in sorted(sr.tournament.changed()):
     print_tournament_short(T, indent=2)
     T.srnewdata_apply()
+    T.schedule.save_results()
+  print("Saving Tournament data...")
   sr._data.save("tournament")
+  print("Saving coach data...")
+  sr.coach.save()
+  print("Saving team data...")
+  sr.team.save()
+  print("Saving DONE.")
 
 
 def edit_searched_tournaments():

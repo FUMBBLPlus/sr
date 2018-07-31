@@ -454,6 +454,8 @@ class CallerInput(OptionsInput):
     try:
       return f()
     except:
+      # I need a custom exception instead of any other because
+      # most exceptions are passed by the __call__() method.
       raise self.CallerInPutException()
 
 

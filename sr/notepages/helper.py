@@ -193,7 +193,11 @@ def bbcnoteurl(link, name=None):
 
 def bbcnteams(tournament):
   if tournament.iselim:
-    return str(tournament.srnteams)
+    srnteams = tournament.srnteams
+    if srnteams:
+      return str(srnteams)
+    else:
+      return sr.tournament.SRClass.NONE
   return ""
 
 def bbcteam(team):
