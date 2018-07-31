@@ -70,6 +70,7 @@ def delete_rankings(reportNr, name):
 def load_rankings(reportNr, name):
   FullRankingsRow = sr.report.Report.FullRankingsRow
   pi = FullRankingsRow._fields.index("Performer")
+  pi -= 1  # rownum (first column) is excluded from the dump
   if name == "coach":
     Pcls = sr.coach.Coach
   elif name == "team":

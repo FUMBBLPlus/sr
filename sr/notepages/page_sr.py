@@ -15,7 +15,7 @@ class NotePage(helper.NotePage):
     kwargs["updated"] = updated
     kwargs["current_report_nr"] = sr.report.current_report().nr
     fumbblyears = sorted(sr.time.fumbblyears(), reverse=True)
-    rnote = sr.notepages.page["SR-Reports-Y__"].NotePage
+    rnote = sr.notepages.page["SR-Reports-Yn"].NotePage
     reports = [rnote.of_fumbblyear(y) for y in fumbblyears]
     tnote = sr.notepages.page["SR-Tournaments-Yn"].NotePage
     tournaments = [tnote.of_fumbblyear(y) for y in fumbblyears]

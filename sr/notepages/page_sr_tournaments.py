@@ -85,18 +85,3 @@ class NotePage(helper.FUMBBLYearNotePage):
         sr.tournament.offumbblyear(self.fumbblyear),
         reverse=True,
     )
-
-
-
-
-def all_():
-  return [
-      NotePage.of_fumbblyear(y)
-      for y in list(sr.time.fumbblyears())
-  ]
-
-
-def toupdate():
-  w = sr.time.lowest_enterweekNr_of_unexited()
-  y = sr.time.fumbblyear(w)
-  return [wp for wp in all_() if y <= wp.fumbblyear]

@@ -1,4 +1,5 @@
 import itertools
+import math
 import pathlib
 import re
 
@@ -52,10 +53,10 @@ class NotePage(metaclass=sr.helper.InstanceRepeater):
 
   @sr.helper.must_logged_in
   def post(self, **content_kwargs):
-    content = self.content(**content_kwargs)
-    content = content.replace("\n", "\r\n")  # required
+    content_ = self.content(**content_kwargs)
+    content_ = content_.replace("\n", "\r\n")  # required
     note_kwargs = dict(
-        note = content,
+        note = content_,
         title = self.title,
         tags = self.tags,
         url = self.link,
@@ -172,6 +173,18 @@ def bbcfsgname(tournament):
   if tournament.ismain and tournament.srfsgname:
     return tournament.srfsgname
   return ""
+
+def bbcmove(moveval):
+  if moveval == 0:
+    return ""
+  elif moveval == math.inf:
+    return bbcode.size("NEW", 8)
+  elif moveval == -math.inf:
+    return bbcode.size("OUT", 8)
+  elif 0 < moveval:
+    return f'↑{bbcode.size(moveval, 8)}'
+  elif moveval < 0:
+    return f'↓{bbcode.size(abs(moveval), 8)}'
 
 def bbcnoteurl(link, name=None):
   if name is None:

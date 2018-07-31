@@ -16,6 +16,30 @@ def queue_mainpage():
   module = sr.notepages.page["SR"]
   postqueue.append((module.NotePage, {"updated": now}))
 
+
+def queue_reportpage_all():
+  queue_reportpage_custom(*list(sr.report.reportNrs()))
+
+def queue_reportpage_current():
+  queue_reportpage_custom(sr.report.current_report().nr)
+
+def queue_reportpage_custom(*reportNrs):
+  module = sr.notepages.page["SR-Report-n"]
+  postqueue.extend([
+      (module.NotePage.of_reportNr(reportNr), {})
+      for reportNr in reportNrs
+  ])
+
+def queue_reportpage_after_turntime():
+  c = sr.report.current_report()
+  p, n = c.prevnext
+  if p:
+    reportNrs = [p.nr, c.nr]
+  else:
+    reportNrs = [c.nr]
+  return queue_reportpage_custom(*reportNrs)
+
+
 def queue_tournamentspage_added():
   queue_tournamentspage_custom(*sr.time.fumbblyears())
 
@@ -43,6 +67,7 @@ def postall():
 
 def postone():
   notepageobj, kwargs = postqueue.popleft()
+  print(notepageobj, kwargs)
   print(f'Posting {notepageobj.link}...', end="\r")
   sys.stdout.flush()
   notepageobj.post(**kwargs)
@@ -50,14 +75,50 @@ def postone():
   sys.stdout.flush()
 
 
-def post_after_turn_time():
+def post_after_turntime():
+  queue_reportpage_after_turntime()
   queue_tournamentspage_unfinalized()
   queue_tournamentspage_pending()
   queue_mainpage()
   postall()
 
+
 def post_mainpage():
   queue_mainpage()
+  postall()
+
+
+def post_reportpage():
+  print("Which report pages?")
+  options = {
+    "tt": (
+        "post after turntime (current and previous)",
+        queue_reportpage_after_turntime,
+    ),
+    ".": (
+        "current",
+        queue_reportpage_current,
+    ),
+    "a": (
+        "all of them",
+        queue_reportpage_all,
+    ),
+    "c": (
+        "custom",
+        lambda: queue_reportpage_custom(
+            *sr.helper.ReportNrsInput("reportNr(s)")()
+        ),
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
+  }
+  for o, (message, f) in options.items():
+    print(f'  {o.upper()}: {message}')
+  response = sr.helper.CallerInput(
+      options = {o: f for o, (message, f) in options.items()},
+  )()
   postall()
 
 
@@ -97,13 +158,17 @@ def post_tournamentspage():
 
 def main():
   options = {
-    "a": (
+    "tt": (
         "post all pages after turn time",
-        post_after_turn_time,
+        post_after_turntime,
     ),
     "m": (
         "post mainpage",
         post_mainpage,
+    ),
+    "r1": (
+        "post report page(s)",
+        post_reportpage,
     ),
     "t": (
         "post tournaments page(s)",

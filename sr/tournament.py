@@ -402,7 +402,8 @@ class SRClass(metaclass=sr.helper.InstanceRepeater):
         if c in value:
           lower, upper = [int(x) for x in value.split(c)]
           return range(lower, upper + 1)
-    return int(value)
+    if value is not None:
+      return int(value)
   @classmethod
   def _srnteams_beforefset(cls, value):
     if hasattr(value, "start") and hasattr(value, "stop"):

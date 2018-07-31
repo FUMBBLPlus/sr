@@ -1,3 +1,4 @@
+import math
 import re
 
 import sr
@@ -48,11 +49,31 @@ class NotePage(helper.NotePage):
     if matchobj:
       return int(matchobj.group(1))
 
+  def numsomething(self, singulartitle, pluraltitle, value):
+    if 1 == value:
+      title = singulartitle
+    elif 1 < value:
+      title = pluraltitle
+    return f'{title}: {value}'
+
   @property
-  def numcoachesteams(self):
-    numcoaches = len(self.report.coachrankings)
-    numteams =  len(self.report.teamrankings)
-    return f'Coaches: {numcoaches} | Teams: {numteams}'
+  def numcoaches(self):
+    value = len(self.report.coachfullrankings)
+    return self.numsomething("Coach", "Coaches", value)
+
+  @property
+  def numteams(self):
+    value =  len(self.report.teamfullrankings)
+    return self.numsomething("Team", "Teams", value)
+
+  @property
+  def nummaintournaments(self):
+    value =  len(
+        {T for T in self.report.tournaments if T.ismain}
+    )
+    return self.numsomething(
+        "Main Tournament", "Main Tournaments", value
+    )
 
   @property
   def prevreportlink(self):
@@ -70,11 +91,7 @@ class NotePage(helper.NotePage):
   def title2(self):
     return f'OBC Sport SR Rankings Report {self.nr}'
 
-  def coachtable(self,
-        nrrange = range(1, 999999999),
-        ptsrange = range(0, 999999999),
-        tournamentnrrange = range(1, 999999999),
-    ):
+  def coachtable(self, house):
     header=[
         "Nr",
         "Move",
@@ -85,53 +102,22 @@ class NotePage(helper.NotePage):
         "T",
         "G",
     ]
-    rankings = self.report.coachrankings
-    rows = []
-    prevnr = None
-    for C in sorted(rankings, key=rankings.get):
-      R = rankings[C]  # differs
-      if R.nr not in nrrange:
-        continue
-      move = bbcode.size("NEW", 8)
-      coach = helper.bbccoach(C)
-      Pval = R.slotobj.totalpoints
-      if Pval not in ptsrange:
-        continue
-      P = str(Pval)
-      PΔ = ""
-      Pw = ""
-      if R.slotobj.wastedpoints:
-        Pw = str(R.slotobj.wastedpoints)
-      Tval, Gval = 0, 0
-      for item in R.slotobj.performances.items():
-        perfobj, (slotgroup, slotnr) = item
-        if slotgroup is sr.slot.SlotGroup("NE"):
-            continue
-        Tval += 1
-        Gval += perfobj.totalnummatches
-      if Tval not in tournamentnrrange:
-        continue
-      T = str(Tval)
-      G = str(Gval)
-      pR = None
-      prevreport = self.report.prevnext[0]
-      if prevreport:
-        pR = prevreport.coachrankings.get(C)  # differs
-      if pR:
-          moveval = pR.nr - R.nr
-          if 0 < moveval:
-            move = f'↑{bbcode.size(moveval, 8)}'
-          elif moveval < 0:
-            move = f'↓{bbcode.size(abs(moveval), 8)}'
-          else:
-            move = ""
-          PΔval = R.slotobj.totalpoints
-          PΔval -= pR.slotobj.totalpoints
-          if PΔval:
-            PΔ = str(PΔval)
-      nr = (str(R.nr) if R.nr != prevnr else "")
-      prevnr = R.nr
-      rows.append([nr, move, coach, P, PΔ, Pw, T, G])
+    rankings = self.report.coachfullrankings
+    def rowgen():
+      prevNr = None
+      for r in rankings:
+        if getattr(r, f'{house.lower()}Nr'):
+          Nr = (str(r.Nr) if r.Nr != prevNr else "")
+          Move = helper.bbcmove(r.Move)
+          Coach = helper.bbccoach(r.Performer)
+          P = str(r.P)
+          PΔ = (str(r.PΔ) if r.PΔ else "")
+          Pw = (str(r.Pw) if r.Pw else "")
+          T = str(r.T)
+          G = str(r.G)
+          yield (Nr, Move, Coach, P, PΔ, Pw, T, G)
+          prevNr = r.Nr
+    rows = tuple(rowgen())
     align="CCLCCCCC"
     widths = [
         "46px",
@@ -152,36 +138,30 @@ class NotePage(helper.NotePage):
 
   def content(self):
     return super().content(
-        coachlowertable = self.coachtable(
-            nrrange = range(101, 999999999),
-            ptsrange = range(25, 999999999),
-            tournamentnrrange = range(6, 999999999),
-        ),
-        coachuppertable = self.coachtable(
-            nrrange = range(1, 101),
-            ptsrange = range(25, 999999999),
-        ),
+        coachlowerminP = sr.settings["coach.lower.minP"],
+        coachlowertable = self.coachtable("lower"),
+        coachrlowerminT = self.report.coachrankings_lower_minT,
+        coachuppermaxNr = sr.settings["coach.upper.maxNr"],
+        coachupperminP = sr.settings["coach.upper.minP"],
+        coachuppertable = self.coachtable("upper"),
         date = self.date,
         nextreportlink = self.nextreportlink,
-        numcoachesteams = self.numcoachesteams,
+        numcoaches = self.numcoaches,
+        nummaintournaments = self.nummaintournaments,
+        numteams = self.numteams,
         prevreportlink = self.prevreportlink,
+        teamlowermaxrosterialNr = sr.settings[
+            "team.lower.maxrosterialNr"
+        ],
+        teamlowerminP = sr.settings["team.lower.minP"],
+        teamlowertable = self.teamtable("lower"),
+        teamuppermaxNr = sr.settings["team.upper.maxNr"],
+        teamupperminP = sr.settings["team.upper.minP"],
+        teamuppertable = self.teamtable("upper"),
         title = self.title2,
-        teamlowertable = self.teamtable(
-            nrrange = range(26, 999999999),
-            rosterialnrrange = range(1, 4),
-        ),
-        teamuppertable = self.teamtable(
-            nrrange = range(1, 26),
-            ptsrange = range(25, 999999999),
-        ),
     )
 
-  def teamtable(self,
-        nrrange = range(1, 999999999),
-        ptsrange = range(0, 999999999),
-        tournamentnrrange = range(1, 999999999),
-        rosterialnrrange = range(1, 999999999),
-    ):
+  def teamtable(self, house):
     header=[
         "Nr",
         "Move",
@@ -194,66 +174,25 @@ class NotePage(helper.NotePage):
         "T",
         "G",
     ]
-    rankings = self.report.teamrankings
-    rows = []
-    rosterials = {}
-    prevnr = None
-    for Te in sorted(rankings, key=rankings.get):
-      R = rankings[Te]
-      Ro = Te.roster
-      roster = Ro.nameofweek(self.report.weekNr)
-      if roster not in rosterials:
-        rosterials[roster] = []
-      rosterials[roster].append(Te)
-      rosterialnr = len(rosterials[roster])
-      if R.nr not in nrrange:
-        continue
-      if rosterialnr not in rosterialnrrange:
-        continue
-      C = Te.coach
-      move = bbcode.size("NEW", 8)
-      team = helper.bbcteam(Te)
-      coach = helper.bbccoach(C)
-      Pval = R.slotobj.totalpoints
-      if Pval not in ptsrange:
-        continue
-      P = str(Pval)
-      PΔ = ""
-      Pw = ""
-      if R.slotobj.wastedpoints:
-        Pw = str(R.slotobj.wastedpoints)
-      Tval, Gval = 0, 0
-      for item in R.slotobj.performances.items():
-        perfobj, (slotgroup, slotnr) = item
-        if slotgroup is sr.slot.SlotGroup("NE"):
-            continue
-        Tval += 1
-        Gval += perfobj.totalnummatches
-      if Tval not in tournamentnrrange:
-        continue
-      T = str(Tval)
-      G = str(Gval)
-      pR = None
-      prevreport = self.report.prevnext[0]
-      if prevreport:
-        pR = prevreport.teamrankings.get(Te)
-      if pR:
-          moveval = pR.nr - R.nr
-          if 0 < moveval:
-            move = f'↑{bbcode.size(moveval, 8)}'
-          elif moveval < 0:
-            move = f'↓{bbcode.size(abs(moveval), 8)}'
-          else:
-            move = ""
-          PΔval = R.slotobj.totalpoints
-          PΔval -= pR.slotobj.totalpoints
-          if PΔval:
-            PΔ = str(PΔval)
-      nr = (str(R.nr) if R.nr != prevnr else "")
-      prevnr = R.nr
-      rows.append([
-          nr, move, team, roster, coach, P, PΔ, Pw, T, G
-      ])
+    rankings = self.report.teamfullrankings
+    def rowgen():
+      weekNr = self.report.weekNr
+      prevNr = None
+      for r in rankings:
+        if getattr(r, f'{house.lower()}Nr'):
+          Nr = (str(r.Nr) if r.Nr != prevNr else "")
+          Move = helper.bbcmove(r.Move)
+          Team = helper.bbcteam(r.Performer)
+          Roster = r.Performer.roster.nameofweek(weekNr)
+          Coach = helper.bbccoach(r.Performer.coach)
+          P = str(r.P)
+          PΔ = (str(r.PΔ) if r.PΔ else "")
+          Pw = (str(r.Pw) if r.Pw else "")
+          T = str(r.T)
+          G = str(r.G)
+          yield (Nr, Move, Team, Roster, Coach, P, PΔ, Pw, T, G)
+          prevNr = r.Nr
+    rows = tuple(rowgen())
     align="CCLLLCCCCC"
     widths = [
         "46px",

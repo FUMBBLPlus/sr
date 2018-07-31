@@ -406,6 +406,18 @@ class FumbblyearsInput(IntegersInput):
   subinputcls = FumbblyearInput
 
 
+class ReportNrInput(IntegerInput):
+
+  def process(self):
+    val = int(super().process())
+    sr.report.reportNrs()[val]  # raises KeyError if not exists
+    return val
+
+
+class ReportNrsInput(IntegersInput):
+  subinputcls = ReportNrInput
+
+
 class OptionsInput(Input):
 
   case_sensitive = False
