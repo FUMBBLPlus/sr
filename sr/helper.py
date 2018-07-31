@@ -374,7 +374,6 @@ class IntegersInput(Input):
     I0 = Input.process(self)
     I1 = re.split(self.re_dividers, I0)
     I2 = [s.strip() for s in I1 if s.strip()]
-    print(I2)
     def subgen():
       for s in I2:
         s2 = re.split(self.re_range_dividers, s, 1)
@@ -448,9 +447,14 @@ class YesNoInput(OptionsInput):
 
 class CallerInput(OptionsInput):
 
+  class CallerInPutException(Exception): pass
+
   def process(self):
     f = super().process()
-    return f()
+    try:
+      return f()
+    except:
+      raise self.CallerInPutException()
 
 
 

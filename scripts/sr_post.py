@@ -18,7 +18,13 @@ def queue_mainpage():
 
 
 def queue_reportpage_all():
-  queue_reportpage_custom(*list(sr.report.reportNrs()))
+  current_weekNr = sr.time.current_weekNr()
+  reportNrs = [
+      reportNr
+      for reportNr, weekNr in sr.report.reportNrs().items()
+      if weekNr <= urrent_weekNr
+  ]
+  queue_reportpage_custom(*reportNrs)
 
 def queue_reportpage_current():
   queue_reportpage_custom(sr.report.current_report().nr)
