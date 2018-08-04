@@ -976,21 +976,23 @@ def changed():
 
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def enters(weekNr):
-  return {
-      T for T in added()
-      if T.main is not None
-      and T.main.srenterweekNr is not None
-      and weekNr == T.main.srenterweekNr
-  }
+  def subgen():
+    for T in added():
+      srexitweekNr = T.main.srdatasrenterweekNr
+      if weekNr == srexitweekNr:
+        yield T
+  return tuple(subgen())
 
 
 @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
 def exits(weekNr):
-  return {
-      T for T in added()
-      if T.main.srlatestexitweekNr is not None
-      and weekNr == T.main.srlatestexitweekNr
-  }
+  def subgen():
+    for T in added():
+      srexitweekNr = T.main.srdatasrexitweekNr
+      if weekNr == srexitweekNr:
+        yield T
+  return tuple(subgen())
+
 
 
 def fumbblcups():
@@ -1057,7 +1059,7 @@ def ofweekNr(weekNr):
   }
 
 
-def sort(tournaments, reverse=False):
+def sort(tournaments, *, reverse=False):
   slot_key = {
       "FC": 0, "MA": 1, "R": 2, None: 3, "W": 4, "NE": 5,
   }
@@ -1069,6 +1071,21 @@ def sort(tournaments, reverse=False):
           0 if t.main is None or t.main.srenterweekNr is None
           else t.main.srenterweekNr
       ),
+      (t.rank == SRClass.MINOR),
+      (slot_key[t.main.srfsgname] if t.main else "?"),
+      (t.main.srname if t.main else "?"),
+      -t.level,
+      t.id,
+    ]
+  return sorted(tournaments, key=key)
+
+
+def sortwithoutenterweekNr(tournaments):
+  slot_key = {
+      "FC": 0, "MA": 1, "R": 2, None: 3, "W": 4, "NE": 5,
+  }
+  def key(t):
+    return [
       (t.rank == SRClass.MINOR),
       (slot_key[t.main.srfsgname] if t.main else "?"),
       (t.main.srname if t.main else "?"),

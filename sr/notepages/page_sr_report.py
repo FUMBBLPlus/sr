@@ -122,7 +122,7 @@ class NotePage(helper.NotePage):
     widths = [
         "46px",
         "46px",
-        "170x",
+        "170px",
         "46px",
         "55px",
         "55px",

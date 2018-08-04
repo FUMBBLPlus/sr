@@ -75,6 +75,16 @@ class FUMBBLYearNotePage(NotePage):
     self._weekNrs = ...
     super().__init__(link)
 
+  @property
+  def datestr(self):
+    fromdatestr = self.fromdate.strftime(sr.time.ISO_DATE_FMT)
+    todate = self.todate
+    if todate is not None:
+      todatestr = todate.strftime(sr.time.ISO_DATE_FMT)
+      return f'from {fromdatestr} to {todatestr}'
+    else:
+      return f'from {fromdatestr}'
+
   @classmethod
   def of_fumbblyear(cls, fumbblyear):
     name = f'SR-{cls.NAME}-Y{fumbblyear}'
@@ -116,7 +126,10 @@ class FUMBBLYearNotePage(NotePage):
   @property
   def weekNrs(self):
     if self._weekNrs is ...:
-      self._weekNrs = sr.time.fumbblyears()[self.fumbblyear]
+      weekNrs0 = set(sr.time.fumbblyears()[self.fumbblyear])
+      weeknrs1 = set(sr.report.weekNrs())
+      weekNrs = weekNrs0 & weeknrs1
+      self._weekNrs = weekNrs
     return self._weekNrs
 
 
@@ -221,8 +234,8 @@ def bbctournament(
 
 def bbcreport(report, name=None):
   if name is None:
-    name = f'#{report.nr}'
-  return bbcnoteurl(f'SR-Report-{report.nr}', name)
+    name = f'{report.nr}'
+  return bbcnoteurl(f'SR-Report-{report.nr}', str(name))
 
 
 def noteurl(link):

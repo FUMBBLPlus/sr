@@ -208,7 +208,7 @@ class Report(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def exits(self):
-    return sr.tournament.enters(self.weekNr)
+    return sr.tournament.exits(self.weekNr)
 
   @property
   def prevnext(self):

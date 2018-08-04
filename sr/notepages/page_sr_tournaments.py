@@ -11,20 +11,10 @@ class NotePage(helper.FUMBBLYearNotePage):
 
   def content(self):
     return super().content(
-        date = self.date,
+        date = self.datestr,
         title = self.title2,
         table = self.table,
     )
-
-  @property
-  def date(self):
-    fromdatestr = self.fromdate.strftime(sr.time.ISO_DATE_FMT)
-    todate = self.todate
-    if todate is not None:
-      todatestr = todate.strftime(sr.time.ISO_DATE_FMT)
-      return f'from {fromdatestr} to {todatestr}'
-    else:
-      return f'from {fromdatestr}'
 
   @property
   def table(self):

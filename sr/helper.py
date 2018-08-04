@@ -453,6 +453,8 @@ class CallerInput(OptionsInput):
     f = super().process()
     try:
       return f()
+    except KeyboardInterrupt:
+      raise
     except:
       # I need a custom exception instead of any other because
       # most exceptions are passed by the __call__() method.

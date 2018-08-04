@@ -4,23 +4,23 @@ N = "\n"
 
 
 def b(text):
-  return f'[b]{text}[/b]'
+  return f'[b]{str(text)}[/b]'
 
 def center(text):
-  return f'[block=center]{text}[/block]'
+  return f'[block=center]{str(text)}[/block]'
 
 
 
 def i(text):
-  return f'[i]{text}[/i]'
+  return f'[i]{str(text)}[/i]'
 
 
 def left(text):
-  return f'{text}'
+  return f'{str(text)}'
 
 
 def right(text):
-  return f'[block=right]{text}[/block]'
+  return f'[block=right]{str(text)}[/block]'
 
 
 def size(content, size=10):

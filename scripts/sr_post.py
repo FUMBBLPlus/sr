@@ -17,6 +17,32 @@ def queue_mainpage():
   postqueue.append((module.NotePage, {"updated": now}))
 
 
+def queue_halloffame_topcoaches():
+  module = sr.notepages.page["SR-Coach-Records"]
+  postqueue.append((module.NotePage, {}))
+
+def queue_halloffame_topteams():
+  module = sr.notepages.page["SR-Team-Records"]
+  postqueue.append((module.NotePage, {}))
+
+def queue_halloffame_famouscoaches():
+  module = sr.notepages.page["SR-Coach-Famous"]
+  postqueue.append((module.NotePage, {}))
+
+def queue_halloffame_famousteams():
+  module = sr.notepages.page["SR-Team-Famous"]
+  postqueue.append((module.NotePage, {}))
+
+
+def queue_reportpage_after_turntime():
+  c = sr.report.current_report()
+  p, n = c.prevnext
+  if p:
+    reportNrs = [p.nr, c.nr]
+  else:
+    reportNrs = [c.nr]
+  return queue_reportpage_custom(*reportNrs)
+
 def queue_reportpage_all():
   current_weekNr = sr.time.current_weekNr()
   reportNrs = [
@@ -36,14 +62,27 @@ def queue_reportpage_custom(*reportNrs):
       for reportNr in reportNrs
   ])
 
-def queue_reportpage_after_turntime():
+
+def queue_reportspage_after_turntime():
   c = sr.report.current_report()
+  fumbblyears = {sr.time.current_fumbblyear()}
   p, n = c.prevnext
   if p:
-    reportNrs = [p.nr, c.nr]
-  else:
-    reportNrs = [c.nr]
-  return queue_reportpage_custom(*reportNrs)
+    fumbblyears.add(sr.time.fumbblyear(p.weekNr))
+  return queue_reportspage_custom(*sorted(fumbblyears))
+
+def queue_reportspage_all():
+  queue_reportspage_custom(*sr.time.fumbblyears())
+
+def queue_reportspage_current():
+  queue_reportspage_custom(sr.time.current_fumbblyear())
+
+def queue_reportspage_custom(*fumbblyears):
+  module = sr.notepages.page["SR-Reports-Yn"]
+  postqueue.extend([
+      (module.NotePage.of_fumbblyear(y), {})
+      for y in fumbblyears
+  ])
 
 
 def queue_tournamentspage_added():
@@ -82,14 +121,55 @@ def postone():
 
 def post_after_turntime():
   queue_reportpage_after_turntime()
+  queue_reportspage_after_turntime()
   queue_tournamentspage_unfinalized()
   queue_tournamentspage_pending()
   queue_mainpage()
+  queue_halloffame_topcoaches()
+  queue_halloffame_topteams()
+  queue_halloffame_famouscoaches()
+  queue_halloffame_famousteams()
   postall()
 
 
 def post_mainpage():
   queue_mainpage()
+  postall()
+
+
+def post_halloffame():
+  print("Which hall of fame pages?")
+  options = {
+    "a": (
+        "all of them",
+        queue_halloffame_all,
+    ),
+    "tc": (
+        "Top Coaches",
+        queue_halloffame_topcoaches,
+    ),
+    "tt": (
+        "Top Teams",
+        queue_halloffame_topteams,
+    ),
+    "fc": (
+        "Famous Coaches",
+        queue_halloffame_famouscoaches,
+    ),
+    "ft": (
+        "Famous Teams",
+        queue_halloffame_famousteams,
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
+  }
+  for o, (message, f) in options.items():
+    print(f'  {o.upper()}: {message}')
+  response = sr.helper.CallerInput(
+      options = {o: f for o, (message, f) in options.items()},
+  )()
   postall()
 
 
@@ -112,6 +192,40 @@ def post_reportpage():
         "custom",
         lambda: queue_reportpage_custom(
             *sr.helper.ReportNrsInput("reportNr(s)")()
+        ),
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
+  }
+  for o, (message, f) in options.items():
+    print(f'  {o.upper()}: {message}')
+  response = sr.helper.CallerInput(
+      options = {o: f for o, (message, f) in options.items()},
+  )()
+  postall()
+
+
+def post_reportspage():
+  print("Which reports pages?")
+  options = {
+    "tt": (
+        "post after turntime (current and previous)",
+        queue_reportspage_after_turntime,
+    ),
+    ".": (
+        "current",
+        queue_reportspage_current,
+    ),
+    "a": (
+        "all of them",
+        queue_reportspage_all,
+    ),
+    "c": (
+        "custom",
+        lambda: queue_reportspage_custom(
+            *sr.helper.FumbblyearsInput("fumbblyear(s)")()
         ),
     ),
     "e": (
@@ -167,17 +281,25 @@ def main():
         "post all pages after turn time",
         post_after_turntime,
     ),
-    "m": (
-        "post mainpage",
-        post_mainpage,
-    ),
     "r1": (
         "post report page(s)",
         post_reportpage,
     ),
-    "t": (
-        "post tournaments page(s)",
+    "ry": (
+        "post reports of year page(s)",
+        post_reportspage,
+    ),
+    "ty": (
+        "post tournaments of year page(s)",
         post_tournamentspage,
+    ),
+    "h": (
+        "post hall of fame page(s)",
+        post_halloffame,
+    ),
+    "m": (
+        "post mainpage",
+        post_mainpage,
     ),
     "q": ("quit", lambda: "<QUIT>")
   }
