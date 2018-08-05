@@ -93,11 +93,14 @@ def main(tournaments, filter_):
             + "Team: "
             + f'{str(Te).strip()} [{str(Te.id)}]'
         )[:49]
+        tppoints = TP.points
+        if tppoints is None:
+          tppoints = ""
         print(
             f'{stra:<50}'
             f'{TP.strresults:<11}'
             f'{TP.rawpoints:>5}'
-            f'{TP.points:>5}'
+            f'{tppoints:>5}'
             f'{TP.totalpoints:>5}'
             f'{"-+"[TP.clean]:>3}'
         )
@@ -117,11 +120,14 @@ def main(tournaments, filter_):
               + TP2.tournament.srname
           )[:49-len(stra2)]
           stra = stra1 + stra2
+          tp2points = TP2.points
+          if tp2points is None:
+            tp2points = ""
           print(
               f'{stra:<50}'
               f'{TP2.strresults:<11}'
               f'{TP2.rawpoints:>5}'
-              f'{TP2.points:>5}'
+              f'{tp2points:>5}'
               f'{"-+"[TP2.clean]:>8}'
           )
     if tshown:
