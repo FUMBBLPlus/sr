@@ -13,9 +13,9 @@ class NotePage(helper.FUMBBLYearNotePage):
   def table(self):
     header=[
         "Name",
+        "Fmt",
         "Rnk",
         "Lvl",
-        "Fmt",
         "Tms",
         "Points",
         "FSG",
@@ -23,9 +23,9 @@ class NotePage(helper.FUMBBLYearNotePage):
     rows = list(
         [
             helper.bbctournament(T),
+            T.srformatchar,
             T.rank,
             T.level,
-            T.srformatchar,
             helper.bbcnteams(T),
             T.srpointsstr,
             helper.bbcfsgname(T),

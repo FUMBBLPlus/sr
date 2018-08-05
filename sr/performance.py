@@ -199,11 +199,11 @@ class CoachPerformance(BasePerformance):
             done = True
         # The rest of the points should be zeroed.
         if CP._points is ...:
-          CP._points = 0
+          CP._points = None
     # If no team made to this level then at this point
-    # self._points is yet unchanged but it should be zero.
+    # self._points is yet unchanged but it should be None.
     if self._points is ...:
-      self._points = 0
+      self._points = None
     return self._points
 
   @property
@@ -256,11 +256,14 @@ class CoachPerformance(BasePerformance):
   @_main_tournament_only
   def totalpoints(self):
     if self._totalpoints is ...:
-      self._totalpoints = sum(
-          CoachPerformance(T.id, self.coachId).points
-          for T in self.withqualifiers
-          if self.coach in T.coaches
-      )
+      totalpoints = 0
+      for T in self.withqualifiers:
+        if self.coach in T.coaches:
+          P = CoachPerformance(T.id, self.coachId)
+          points = P.points
+          if points is not None:
+            totalpoints += points
+      self._totalpoints = totalpoints
     return self._totalpoints
 
 
@@ -290,6 +293,12 @@ class TeamPerformance(BasePerformance):
         for T in self.alltournaments
         for result in Schedule(T.id).results.get(self.team, [])
     }
+
+  @property
+  def fullresults(self):
+    return self.tournament.schedule.fullresults.get(
+        self.team, []
+    )
 
   @property
   def levelperformances(self):
@@ -334,7 +343,7 @@ class TeamPerformance(BasePerformance):
         if i == 0:
           TP._points = pts
         else:
-          TP._points = 0
+          TP._points = None
     return self._points
 
   @property
@@ -464,10 +473,12 @@ class TeamPerformance(BasePerformance):
   @_main_tournament_only
   def totalpoints(self):
     if self._totalpoints is ...:
-      self._totalpoints = sum(
-          TeamPerformance(T.id, self.teamId).points
-          for T in self.withqualifiers
-          if self.team in T.teams
-      )
+      totalpoints = 0
+      for T in self.withqualifiers:
+        if self.team in T.teams:
+          P = TeamPerformance(T.id, self.teamId)
+          points = P.points
+          if points is not None:
+            totalpoints += points
+      self._totalpoints = totalpoints
     return self._totalpoints
-

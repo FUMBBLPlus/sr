@@ -172,6 +172,51 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
     return self._apidata
 
   @property
+  def fullresults(self):
+    d = {
+        Te: [list([Matchup.Result.none, None])] * self.rounds
+        for Te in self.teams
+        if not Te.isfiller
+    }
+    quitters = set()
+    rounds = self.rounds
+    if rounds is not None:
+      for r in range(1, rounds + 1):
+        for m in {m for m in self.matchups if m.round == r}:
+          for Te, result_ in m.results.items():
+            d[Te][r-1] = [result_, m]
+        # Now I have to look for quitters
+        if 1 < r:
+          for Te, results_ in d.items():
+            if Te in quitters:
+              continue
+            prev, this = results_[r-2:r]
+            if this[0] != Matchup.Result.none:
+              continue
+            # Replacement teams should not get treated as
+            # quitters before their first participation.
+            for r2, (result2, m2) in enumerate(results_, 1):
+              if result2 != Matchup.Result.none:
+                break
+            if r <= r2:
+              continue
+            # For non-elimination tournament, no
+            # participation in a round is considered a quit.
+            # For elimination tournaments the previous round
+            # should be checked.
+            if (
+                not self.tournament.iselim
+                or prev[0] in {
+                    Matchup.Result.win,
+                    Matchup.Result.bye,
+                    Matchup.Result.fillerbye,
+                }
+            ):
+              d[Te][r-1][0] = Matchup.Result.quit
+              quitters.add(Te)
+    return d
+
+  @property
   def matchups(self):
     return set(self.apidata)
 
@@ -181,46 +226,9 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
       d = sr._data.load_results(self.tournamentId)
       if d is None:
         d = {
-            Te: [Matchup.Result.none] * self.rounds
-            for Te in self.teams
-            if not Te.isfiller
+            Te: [t[0] for t in results_]
+            for Te, results_ in self.fullresults.items()
         }
-        quitters = set()
-        rounds = self.rounds
-        if rounds is not None:
-          for r in range(1, rounds + 1):
-            for m in {m for m in self.matchups if m.round == r}:
-              for Te, result_ in m.results.items():
-                d[Te][r-1] = result_
-            # Now I have to look for quitters
-            if 1 < r:
-              for Te, results_ in d.items():
-                if Te in quitters:
-                  continue
-                prev, this = results_[r-2:r]
-                if this != Matchup.Result.none:
-                  continue
-                # Replacement teams should not get treated as
-                # quitters before their first participation.
-                for r2, result2 in enumerate(results_, 1):
-                  if result2 != Matchup.Result.none:
-                    break
-                if r <= r2:
-                  continue
-                # For non-elimination tournament, no
-                # participation in a round is considered a quit.
-                # For elimination tournaments the previous round
-                # should be checked.
-                if (
-                    not self.tournament.iselim
-                    or prev in {
-                        Matchup.Result.win,
-                        Matchup.Result.bye,
-                        Matchup.Result.fillerbye,
-                    }
-                ):
-                  d[Te][r-1] = Matchup.Result.quit
-                  quitters.add(Te)
       self._results = d
     return self._results
 

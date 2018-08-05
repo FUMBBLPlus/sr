@@ -104,8 +104,8 @@ class BaseSlots(metaclass=sr.helper.InstanceRepeater):
       n = self.N(group)
       li = self.group[group]
       if 99999 <= n or len(li) < n:
-        self.performances[performance] = (group, len(li))
         li.append(performance)
+        self.performances[performance] = (group, len(li))
         break
       else:
         group = self.rules[group].nextslotgroup

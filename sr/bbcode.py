@@ -62,14 +62,30 @@ def table(
       yield indent + f'[tr {next(tr_styles_)}]'
       align_ = next(td_aligns)
       for c, record in enumerate(row):
-        f = {"C": center, "L": left, "R": right}[align_[c]]
-        w = ""
+        tdkwargs = {}
         if r == 0 and widths is not None:
-          w = f' width={widths[c]}'
-        yield 2 * indent + f'[td{w}]{f(record)}[/td]'
+          tdkwargs["width"] = widths[c]
+        yield 2 * indent + td(
+            record,
+            align=align_[c],
+            **tdkwargs
+        )
       yield indent + f'[/tr]'
     yield f'[/table]'
   return f'\\{N}'.join(subgen())
+
+
+def td(record, *, align="L", **kwargs):
+  if hasattr(record, "tdkwargs"):
+    kwargs.update("tdkwargs")
+  alignf = {"C": center, "L": left, "R": right}[align]
+  if kwargs:
+    params = " ".join(f'{k}={v}' for k, v in kwargs.items())
+    td0 = f'[td {params}]'
+  else:
+    td0 = "[td]"
+  td1 = "[/td]"
+  return td0 + alignf(record) + td1
 
 
 def url(url, name=None):
