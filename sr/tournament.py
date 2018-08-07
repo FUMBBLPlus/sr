@@ -574,7 +574,9 @@ _srclassattrs.add("srpointsstr")
             "srdatasrenterweekNr", "schedulesrenterweekNr",
         ],
         "srexitweekNr": [
-            "srdatasrexitweekNr", "srtitlesrexitweekNr",
+            "srdatasrexitweekNr",
+            "srtitlesrexitweekNr",
+            "srdatasrknownexitweekNr",
         ],
     },
     valsettermapping = {"srclassval": False},
@@ -830,6 +832,18 @@ class Tournament(metaclass=sr.helper.InstanceRepeater):
   def srfsg(self):
     if self.srfsgname:
       return sr.slot.SlotGroup(self.srfsgname)
+
+  @property
+  @_main_only
+  def srdatasrknownexitweekNr(self):
+    if self.srdatasrexitweekNr is not None:
+      return self.srdatasrexitweekNr
+    else:
+      w = self.srdatasrlatestexitweekNr
+      if w:
+        current_weekNr = sr.time.current_weekNr()
+        if w <= current_weekNr + 1:
+          return w
 
   @property
   @_main_only

@@ -170,7 +170,10 @@ def bbcexitdate(tournament):
     return " "
   reportNr = sr.report.weekNrs().get(w)
   if reportNr:
-    assert known
+    if not known:
+      raise Exception(
+        f'exitweekNr is unknown of [{T.id}] {T}'
+      )
     report = sr.report.Report(reportNr)
     datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
     return bbcreport(report, datestr)
