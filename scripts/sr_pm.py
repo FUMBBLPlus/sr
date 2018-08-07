@@ -8,7 +8,7 @@ import sr
 from sr import bbcode
 
 
-class Row:
+class Item:
 
   STRSEPARATOR = " "
   charwidths = (30, 3, 3, 3, 3, 10, 4, 4, 8, 4, 8)
@@ -25,7 +25,7 @@ class Row:
     )
 
 
-class LineRow(Row):
+class LineItem(Item):
 
   LINESTRS = ("=",)
 
@@ -48,7 +48,7 @@ class LineRow(Row):
 
 
 
-class EmptyRow(LineRow):
+class EmptyItem(LineItem):
 
   LINESTRS = ("",)
 
@@ -68,7 +68,7 @@ class SpaceBetweenTwoTables:
 
 
 
-class CoachRow(Row):
+class CoachItem(Item):
 
     aligns = "C"
     charwidths = (90,)
@@ -81,7 +81,7 @@ class CoachRow(Row):
         return (f'[{self.coach.id}] {self.coach.name}',)
 
 
-class HeaderRow(Row):
+class HeaderItem(Item):
 
   values = (
       "Tournament / Team",
@@ -101,7 +101,7 @@ class HeaderRow(Row):
 
 
 
-class MainTournamentRow(Row):
+class MainTournamentItem(Item):
 
     aligns = "L"
     charwidths = (90,)
@@ -117,7 +117,7 @@ class MainTournamentRow(Row):
     def values(self):
         return (self.tournament.srname,)
 
-class TeamRow(Row):
+class TeamItem(Item):
 
     INDENT = "  "
     aligns = "L"
@@ -131,7 +131,7 @@ class TeamRow(Row):
         return (self.INDENT + self.team.name,)
 
 
-class TeamPerformanceRow(Row):
+class TeamPerformanceItem(Item):
 
   TOURNAMENTINDENT = "    "
   WINNERCHAR = "*"
@@ -223,24 +223,24 @@ def iter_rows(reportNr=None, coachName=None):
     if 0 < i:
       yield SpaceBetweenTwoTables()
     if coachName is None:
-      yield CoachRow(C)
+      yield CoachItem(C)
       yield SpaceBetweenCoachAndTable()
-    yield HeaderRow()
-    yield LineRow()
+    yield HeaderItem()
+    yield LineItem()
     for coachperformance in sorted(
         R.slotobj.performances,
         key=lambda P: P.sort_key
     ):
-      yield MainTournamentRow(coachperformance)
+      yield MainTournamentItem(coachperformance)
       for teamperformance in sorted(
           coachperformance.allteamperformances,
           key=lambda p:p.team.name
       ):
-        yield TeamRow(teamperformance.team)
+        yield TeamItem(teamperformance.team)
         for performance in sorted(
             teamperformance.thisallteamperformances
         ):
-          yield TeamPerformanceRow(report, performance)
+          yield TeamPerformanceItem(report, performance)
 
 
 
