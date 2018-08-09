@@ -190,6 +190,13 @@ def bbcfsgname(tournament):
     return tournament.srfsgname
   return ""
 
+def bbcmatch(match, name):
+  if hasattr(match, "id"):
+    matchId = int(match.id)
+  else:
+    matchId = int(match)
+  return bbcode.url(f'/p/match?id={matchId}', name)
+
 def bbcmove(moveval):
   if moveval == 0:
     return ""
@@ -215,6 +222,17 @@ def bbcnteams(tournament):
     else:
       return sr.tournament.SRClass.NONE
   return ""
+
+def bbcslot(sgname, nr, available):
+  return (
+      f'{sgname}[size=7]'
+      "[block display=inline position=relative]"
+      "[block display=inline position=absolute top=-0.5ex]"
+      f'{nr}[/block]'
+      "[block display=inline position=absolute top=1.5ex]"
+      f'{available}[/block]'
+      "[/block][/size]"
+  )
 
 def bbcteam(team):
   if team:

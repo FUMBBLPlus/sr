@@ -6,10 +6,12 @@ import sys
 
 import sr
 from sr import bbcode
+from sr.notepages import helper
 
 
 class Item:
 
+  HASBBCODE = True
   STRSEPARATOR = " "
   charwidths = (30, 3, 3, 3, 3, 10, 4, 4, 8, 4, 8)
   aligns = aligns = "LCCCCLRRLRL"
@@ -27,6 +29,7 @@ class Item:
 
 class LineItem(Item):
 
+  HASBBCODE = False
   LINESTRS = ("=",)
 
   @property
@@ -47,38 +50,63 @@ class LineItem(Item):
     return values
 
 
-
 class EmptyItem(LineItem):
 
   LINESTRS = ("",)
 
+  def bbcode(self):
+    return ""
 
 
-class SpaceBetweenCoachAndTable:
+class TableStartItem:
+
+  HASBBCODE = True
+
+  def __str__(self):
+    return "\n"
+
+  def bbcode(self):
+    return bbcode.otag(
+        "table",
+        "blackborder border2 bg=#e6ddc7"
+    )
+
+
+class TableEndItem:
+
+  HASBBCODE = True
+
+  def __str__(self):
+    return "\n"
+
+  def bbcode(self):
+    return bbcode.ctag("table")
+
+
+
+class MajorSeparatorItem:
+
+  HASBBCODE = False
 
   def __str__(self):
     return "\n"
 
 
 
-class SpaceBetweenTwoTables:
-
-  def __str__(self):
-    return "\n" * 2
-
-
-
 class CoachItem(Item):
 
-    aligns = "C"
-    charwidths = (90,)
+  aligns = "C"
+  charwidths = (90,)
 
-    def __init__(self, coach):
-        self.coach = coach
+  def __init__(self, coach):
+      self.coach = coach
 
-    @property
-    def values(self):
-        return (f'[{self.coach.id}] {self.coach.name}',)
+  @property
+  def values(self):
+      return (f'[{self.coach.id}] {self.coach.name}',)
+
+  def bbcode(self):
+    return bbcode.center(helper.bbccoach(self.coach))
 
 
 class HeaderItem(Item):
@@ -97,44 +125,105 @@ class HeaderItem(Item):
       "Scoa",
   )
 
+  bbcodevalues = (
+      f'Tournament{bbcode.THINSPACE}/{bbcode.THINSPACE}Team',
+      bbcode.center("Fmt"),
+      bbcode.center("Rnk"),
+      bbcode.center("Lvl"),
+      bbcode.center("Tms"),
+      bbcode.center("Results"),
+      bbcode.center(
+          f'Pts{bbcode.sub("B")}{bbcode.THREEPEREMSPACE}'
+      ),
+      bbcode.center(
+          f'Pts{bbcode.sub("T")}{bbcode.THREEPEREMSPACE}'
+      ),
+      bbcode.center(
+          f'Slot{bbcode.sub("T")}{bbcode.THREEPEREMSPACE}'
+      ),
+      bbcode.center(
+          f'Pts{bbcode.sub("C")}{bbcode.THREEPEREMSPACE}'
+      ),
+      bbcode.center(
+          f'Slot{bbcode.sub("C")}{bbcode.THREEPEREMSPACE}'
+      ),
+  )
 
+  def bbcode(self):
+    return (
+      bbcode.otag("tr", "bg=black fg=white")
+      + "".join([
+          (
+              bbcode.otag("td")
+              + s
+              + bbcode.ctag("td")
+          )
+          for s in self.bbcodevalues
+      ])
+      + bbcode.ctag("tr")
+    )
 
 
 
 class MainTournamentItem(Item):
 
-    aligns = "L"
-    charwidths = (90,)
+  aligns = "L"
+  charwidths = (90,)
 
-    def __init__(self, coachperformance):
-        self.coachperformance = coachperformance
+  def __init__(self, coachperformance):
+      self.coachperformance = coachperformance
 
-    @property
-    def tournament(self):
-        return self.coachperformance.tournament
+  @property
+  def tournament(self):
+      return self.coachperformance.tournament
 
-    @property
-    def values(self):
-        return (self.tournament.srname,)
+  @property
+  def values(self):
+      return (self.tournament.srname,)
+
+  def bbcode(self):
+    return (
+      bbcode.otag("tr", "bg=#b6ad97 fg=#e6ddc7")
+      + bbcode.otag("td", "colspan=11")
+      + bbcode.b(
+          helper.bbctournament(self.tournament, False, False)
+      )
+      + bbcode.ctag("td")
+      + bbcode.ctag("tr")
+    )
+
 
 class TeamItem(Item):
 
-    INDENT = "  "
-    aligns = "L"
-    charwidths = (90,)
+  BBCODEINDENT = bbcode.ENSPACE
+  INDENT = "  "
+  aligns = "L"
+  charwidths = (90,)
 
-    def __init__(self, team):
-        self.team = team
+  def __init__(self, team):
+      self.team = team
 
-    @property
-    def values(self):
-        return (self.INDENT + self.team.name,)
+  @property
+  def values(self):
+      return (self.INDENT + self.team.name,)
+
+  def bbcode(self):
+    return (
+      bbcode.otag("tr", "bg=#d6cdb7")
+      + bbcode.otag("td", "colspan=11")
+      + self.BBCODEINDENT + helper.bbcteam(self.team)
+      + bbcode.ctag("td")
+      + bbcode.ctag("tr")
+    )
 
 
 class TeamPerformanceItem(Item):
 
   TOURNAMENTINDENT = "    "
   WINNERCHAR = "*"
+  BBCODETOURNAMENTINDENT = bbcode.ENSPACE * 2
+  BBCODEWINNERCHAR = "★"
+  BBCODENONERESULTCHAR = "·"
 
   def __init__(self, report, performance):
     self.report = report
@@ -146,41 +235,56 @@ class TeamPerformanceItem(Item):
 
   @property
   def coachperformance(self):
-    return sr.performance.CoachPerformance(self.tournament.id, self.performance.team.coach.id)
+    return sr.performance.CoachPerformance(
+        self.tournament.id, self.performance.team.coach.id
+  )
   @property
   def maincoachperformance(self):
-    return sr.performance.CoachPerformance(self.tournament.main.id, self.performance.team.coach.id)
+    return sr.performance.CoachPerformance(
+        self.tournament.main.id, self.performance.team.coach.id
+    )
   @property
   def mainperformance(self):
-    return sr.performance.TeamPerformance(self.tournament.main.id, self.performance.team.id)
+    return sr.performance.TeamPerformance(
+        self.tournament.main.id, self.performance.team.id
+    )
 
   @property
   def values(self):
+    team = self.performance.team
+    coach = team.coach
+    mainperformance = self.mainperformance
+    maincoachperformance = self.maincoachperformance
     tpoints = self.performance.points
     if tpoints is None:
       tslot = ""
     else:
-      tslotgroup, tslotnr = self.report.teamrankings[self.performance.team].slotobj.performances[self.mainperformance]
+      TR = self.report.teamrankings[team]
+      Tmainperf = TR.slotobj.performances[mainperformance]
+      tpoints = self.performance.points
+      tslotgroup, tslotnr = Tmainperf
       tslot = tslotgroup.name
       if tslot == "W":
         tpoints = 0
       else:
-        tslots = self.report.teamrankings[self.performance.team].slotobj.N(tslotgroup.name)
+        tslots = TR.slotobj.N(tslotgroup.name)
         tslot += f' {tslotnr}/{tslots}'
-      if not self.mainperformance.clean:
+      if not mainperformance.clean:
         tslot = tslot.lower()
     cpoints = self.coachperformance.points
     if cpoints is None:
       cslot = ""
     else:
-      cslotgroup, cslotnr = self.report.coachrankings[self.performance.team.coach].slotobj.performances[self.maincoachperformance]
+      CR =  self.report.coachrankings[coach]
+      Cmainperf = CR.slotobj.performances[maincoachperformance]
+      cslotgroup, cslotnr = Cmainperf
       cslot = cslotgroup.name
       if cslot == "W":
         cpoints = 0
       else:
-        cslots = self.report.coachrankings[self.performance.team.coach].slotobj.N(cslotgroup.name)
+        cslots = CR.slotobj.N(cslotgroup.name)
         cslot += f' {cslotnr}/{cslots}'
-      if not self.maincoachperformance.clean:
+      if not maincoachperformance.clean:
         cslot = cslot.lower()
     try:
       srnteams = self.tournament.srnteams
@@ -189,7 +293,7 @@ class TeamPerformanceItem(Item):
     results = "".join([
         r.value for r in self.performance.results
     ])
-    iswinner = (self.performance.team is self.tournament.winner)
+    iswinner = (team is self.tournament.winner)
     if iswinner:
       results += self.WINNERCHAR
     result = [
@@ -207,8 +311,119 @@ class TeamPerformanceItem(Item):
     ]
     return result
 
+  def bbcode(self, odd=True):
+    Result = sr.tournament.Matchup.Result
+    team = self.performance.team
+    coach = team.coach
+    mainperformance = self.mainperformance
+    maincoachperformance = self.maincoachperformance
+    tpoints = self.performance.points
+    if tpoints is None:
+      tslot = ""
+    else:
+      TR = self.report.teamrankings[team]
+      Tmainperf = TR.slotobj.performances[mainperformance]
+      tpoints = self.performance.points
+      tslotgroup, tslotnr = Tmainperf
+      tslot = tslotgroup.name
+      if tslot == "W":
+        tpoints = 0
+      else:
+        tslots = TR.slotobj.N(tslotgroup.name)
+        #tslot += f'{bbcode.SIXPEREMSPACE}{tslotnr}/{tslots}'
+        tslot = helper.bbcslot(tslot, tslotnr, tslots)
+      if not mainperformance.clean:
+        tslot = tslot.lower()
+    cpoints = self.coachperformance.points
+    if cpoints is None:
+      cslot = ""
+    else:
+      CR =  self.report.coachrankings[coach]
+      Cmainperf = CR.slotobj.performances[maincoachperformance]
+      cslotgroup, cslotnr = Cmainperf
+      cslot = cslotgroup.name
+      if cslot == "W":
+        cpoints = 0
+      else:
+        cslots = CR.slotobj.N(cslotgroup.name)
+        #cslot += f' {cslotnr}/{cslots}'
+        cslot = helper.bbcslot(cslot, cslotnr, cslots)
+      if not maincoachperformance.clean:
+        cslot = cslot.lower()
+    try:
+      srnteams = self.tournament.srnteams
+    except IndexError:
+      srnteams = ""
+    resultparts = []
+    for result, matchup in self.performance.fullresults:
+      resultvalue = result.value
+      if result is Result.none:
+        resultvalue = self.BBCODENONERESULTCHAR
+      if matchup is not None:
+        match = matchup.match
+        if match is not None:
+          resultparts.append(
+              helper.bbcmatch(match, resultvalue)
+          )
+        else:
+          resultparts.append(resultvalue)
+      else:
+        resultparts.append(resultvalue)
+    results = "".join(resultparts)
+    iswinner = (team is self.tournament.winner)
+    if iswinner:
+      results += self.BBCODEWINNERCHAR
+    parts = []
+    #if odd:
+    #  parts.append(bbcode.otag("tr"))
+    #else:
+    #  parts.append(bbcode.otag("tr", "bg=#d6cdb7"))
+    parts.append(bbcode.otag("tr"))
+    parts.append(bbcode.otag("td"))
+    parts.append((
+        self.BBCODETOURNAMENTINDENT
+        + helper.bbctournament(self.tournament, False, False)
+    ))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.center(self.tournament.srformatchar))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.center(self.tournament.rank))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.center(self.tournament.level))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.center(srnteams))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.monospace(results))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(bbcode.right(self.performance.rawpoints))
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(
+        bbcode.right((tpoints if tpoints is not None else ""))
+    )
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(tslot)
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(
+          bbcode.right((cpoints if cpoints is not None else ""))
+    )
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.otag("td"))
+    parts.append(cslot)
+    parts.append(bbcode.ctag("td"))
+    parts.append(bbcode.ctag("tr"))
+    s = "".join(parts)
+    return s
 
-def iter_rows(reportNr=None, coachName=None):
+def iteritems(reportNr=None, coachName=None):
   if reportNr is None:
     report = sr.report.current_report()
   else:
@@ -221,10 +436,10 @@ def iter_rows(reportNr=None, coachName=None):
     }
   for i, (C, R) in enumerate(coachrankings.items()):
     if 0 < i:
-      yield SpaceBetweenTwoTables()
+      yield MajorSeparatorItem()
     if coachName is None:
       yield CoachItem(C)
-      yield SpaceBetweenCoachAndTable()
+    yield TableStartItem()
     yield HeaderItem()
     yield LineItem()
     for coachperformance in sorted(
@@ -241,14 +456,27 @@ def iter_rows(reportNr=None, coachName=None):
             teamperformance.thisallteamperformances
         ):
           yield TeamPerformanceItem(report, performance)
+    yield TableEndItem()
 
 
 
+def bbcode_points(reportNr=None, coachName=None):
+  def subgen():
+    for item in iteritems(reportNr, coachName):
+      if not item.HASBBCODE:
+        continue
+      if item.__class__.__name__ == "TeamItem":
+        oddevengen = itertools.cycle((True, False))
+      if item.__class__.__name__ == "TeamPerformanceItem":
+        yield item.bbcode(next(oddevengen))
+      else:
+        yield item.bbcode()
+  return f'\\{bbcode.N}'.join(subgen())
 
 
 def print_points(reportNr=None, coachName=None):
-  for row in iter_rows(reportNr, coachName):
-    print(row)
+  for item in iteritems(reportNr, coachName):
+    print(item)
 
 
 def save_points(reportNr=None, coachName=None):
@@ -259,8 +487,9 @@ def save_points(reportNr=None, coachName=None):
   reportNr = report.nr
   with open(f'pts-{reportNr}.txt', "w", encoding="utf8") as f:
     f.write("\n".join(
-        [str(row) for row in iter_rows(reportNr, coachName)]
+        [str(item) for item in iteritems(reportNr, coachName)]
     ))
+
 
 
 if __name__ == "__main__":
