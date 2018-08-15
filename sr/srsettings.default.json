@@ -1,4 +1,5 @@
 {
+	"sr.artwork.table": 566471,
 	"sr.coach.lower.minP": 25,
 	"sr.coach.lower.minTmax": 6,
 	"sr.coach.lower.minTratio": 6,
@@ -8,6 +9,8 @@
 	"sr.note.tags": "264",
 	"sr.sr-data.path": null,
 	"sr.sr-pages.path": null,
+	"sr.tablenote.owner": "SzieberthAdam",
+	"sr.tablenote.tags": "323",
 	"sr.team.lower.maxrosterialNr": 3,
 	"sr.team.lower.minP": 1,
 	"sr.team.upper.maxNr": 25,
