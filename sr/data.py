@@ -1,3 +1,4 @@
+import copy
 import json
 import pathlib
 
@@ -162,23 +163,49 @@ def delete_results(tournamentId):
     p.unlink()  # delete file
 
 def load_results(tournamentId):
+  Result = sr.tournament.Matchup.Result
   p = results_file(tournamentId)
   if p.is_file():
     with p.open() as f:
-      results_ = json.load(f)  # teamIds are strings
-    return {
-        sr.team.Team(int(t)):
-        [sr.tournament.Matchup.Result(c) for c in r]
-        for t, r in results_.items()
-    }
+      results_ = json.load(f)
+    d = {}
+    for teamIdstr, li in results_.items():
+      team = sr.team.Team(int(teamIdstr))
+      for item in li:
+        if item is not None:
+          resultobjvalue, oppoteamId, matchId = item
+          item[0] = resultobj = Result(resultobjvalue)
+          if oppoteamId is not None:
+            item[1] = oppoobj = sr.team.Team(oppoteamId)
+          if matchId is not None:
+            item[2] = matchobj = sr.match.Match(matchId)
+      d[team] = li
+    return d
 
 def save_results(tournamentId):
-  strresults = sr.tournament.Schedule(tournamentId).strresults
-  results_ = {T.id: s for T, s in strresults.items()}
   p = results_file(tournamentId)
+  if p.is_file():
+    return False
+  results = sr.tournament.Schedule(tournamentId).results
+  d = {}
+  for Te, _li in results.items():
+    teamId = Te.id
+    li = copy.deepcopy(_li)  # I protect the original object
+    for item in li:
+      if item is not None:
+        resultobj, oppoobj, matchobj = item
+        item[0] = resultobjvalue = resultobj.value
+        if oppoobj is not None:
+          item[1] = oppoteamId = oppoobj.id
+        if matchobj is not None:
+          item[2] = matchId = matchobj.id
+    # JSON object keys are strings but the encoder converts
+    # integers automatically plus the JSON will be sorted.
+    d[teamId] = li
   p.parent.mkdir(parents=True, exist_ok=True)  # ensure dir
   with p.open("w") as f:
-    json.dump(results_, f, indent='\t', sort_keys=True)
+    json.dump(d, f, indent='\t', sort_keys=True)
+  return True
 
 
 
