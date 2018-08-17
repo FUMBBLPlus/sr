@@ -202,8 +202,13 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
           #
           for m in {m for m in self.matchups if m.round == r}:
             mresults = m.results
-            teams = set(mresults)
-            oppo = {Te: (teams-{Te}).pop() for Te in teams}
+            teams = sorted(mresults)  # Fillers are excluded
+            oppo = {}
+            for i, Te in enumerate(teams):
+              if len(teams) == 1:
+                oppo[Te] = None
+              else:
+                oppo[Te] = teams[1-i]
             match = m.match
             for Te, resultobj in m.results.items():
               d[Te][r-1] = [resultobj, oppo[Te], match]
@@ -211,13 +216,14 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
           if 1 < r:
             for Te, li in d.items():
               if Te not in quitters:
-                prev, this = li[r-2:r]
-                if this is not None:
+                previtem, thisitem = li[r-2:r]
+                if thisitem is not None:
                   continue
                 # Replacement teams should not get treated as
                 # quitters before their first participation.
-                for r2, (resultobj, *_) in enumerate(li, 1):
-                  if resultobj != Matchup.Result.none:
+                # example tournament: 19677
+                for r2, item in enumerate(li, 1):
+                  if item is not None:
                     break
                 if r <= r2:
                   continue
@@ -227,11 +233,14 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
                 # round should be checked.
                 if (
                     not self.tournament.iselim
-                    or (prev is not None and prev[0] in {
-                        Matchup.Result.win,
-                        Matchup.Result.bye,
-                        Matchup.Result.fillerbye,
-                    })
+                    or (
+                        previtem is not None
+                        and previtem[0] in {
+                            Matchup.Result.win,
+                            Matchup.Result.bye,
+                            Matchup.Result.fillerbye,
+                        }
+                    )
                 ):
                   d[Te][r-1] = [Matchup.Result.quit, None, None]
                   quitters.add(Te)
