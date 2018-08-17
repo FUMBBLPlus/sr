@@ -1,8 +1,12 @@
 import json
+import pathlib
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
 import sr
+
+import yarl
 
 
 host = 'fumbbl.com'
@@ -10,6 +14,20 @@ host = 'fumbbl.com'
 
 cache = {
 }
+
+
+def url2path(url):
+  y = yarl.URL(url)
+  # sort query
+  y = y.with_query({k: y.query[k] for k in sorted(y.query)})
+  p = sr._data.srdatadir() / "fumbblapl_cache"
+  for part in  y.parts[1:-1]:
+    p /= urllib.parse.quote(part, "")
+  filename = urllib.parse.quote(y.parts[-1], "")
+  if y.query:
+    filename += urllib.parse.quote("?" + y.query_string, "")
+  p /= filename
+  return p
 
 
 def _get_json_obj(url, force_request=False):
@@ -75,13 +93,16 @@ def get__team(teamId, *, force_request=False):
 
 
 def get__tournament_schedule(
-      tournamentId, *, force_request=False
+      tournamentId, *, force_request=False,
+      replace_with_fixed=True,
+      load_cached=True,
   ):
   srdataname = "api_fixed_get__tournament_schedule"
-  if tournamentId in sr.data[srdataname]:
+  if tournamentId in sr.data[srdataname] and replace_with_fixed:
     return sr.data[srdataname][tournamentId]
+  if load_cached:
+    obj = sr._data.load_fumbblapi_cache_schedule(tournamentId)
+    if obj is not None:
+      return obj
   url = f'https://{host}/api/tournament/schedule/{tournamentId}'
   return _get_json_obj(url, force_request)
-
-
-

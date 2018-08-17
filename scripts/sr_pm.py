@@ -230,6 +230,10 @@ class TeamPerformanceItem(Item):
     self.performance = performance
 
   @property
+  def current(self):
+    return (self.report.weekNr == sr.time.current_weekNr())
+
+  @property
   def tournament(self):
     return self.performance.tournament
 

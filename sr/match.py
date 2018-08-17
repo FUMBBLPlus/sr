@@ -7,6 +7,7 @@ class Match(metaclass=sr.helper.InstanceRepeater):
 
   def __init__(self, matchId: int):
     self._apidata = ...
+    self._conceded = ...
     self._oldapidata = ...
 
   @property
@@ -17,10 +18,15 @@ class Match(metaclass=sr.helper.InstanceRepeater):
 
   @property
   def conceded(self):
-    for team in ("home", "away"):
-      d = self.oldapidata.find(team).attrib
-      if d.get("conceded", "false").lower() == "true":
-        return sr.team.Team(int(d["id"]))
+    if self._conceded is ...:
+      for team in ("home", "away"):
+        d = self.oldapidata.find(team).attrib
+        if d.get("conceded", "false").lower() == "true":
+          self._conceded = sr.team.Team(int(d["id"]))
+          break
+      else:
+        self._conceded = None
+    return self._conceded
 
   @property
   def finished(self):

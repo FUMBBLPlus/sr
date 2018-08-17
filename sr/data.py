@@ -56,6 +56,54 @@ def reload(name=None):
 reload()
 
 
+def save(name):
+  name = name.lower()
+  if name not in _dumpfunc:
+    s = json.dumps(
+        data[name],
+        ensure_ascii = False,
+        indent = "\t",
+        sort_keys = True,
+    )
+  else:
+    s = _dumpfunc[name](name)
+  srdatadir_ = srdatadir()
+  if not srdatadir_:
+    return False
+  pathobj = srdatadir_ / f'{name}.json'
+  with pathobj.open("w", encoding="utf8") as f:
+    f.write(s)
+  return True
+
+
+def dumps_intkey_one_val_per_row(name):
+  keyval_strings = ['"{k}": {j}'.format(
+          k=k,
+          j=json.dumps(v, ensure_ascii=False, sort_keys=True)
+      )
+      for k, v in sorted(data[name].items())]
+  s = "{\n" + ",\n".join(keyval_strings) + "\n}"
+  return s
+
+def dumps_one_obj_per_row(listofobjs):
+  substrings = [
+      json.dumps(o, ensure_ascii=False, sort_keys=True)
+      for o in listofobjs
+  ]
+  s = "[\n" + ",\n".join(substrings) + "\n]"
+  return s
+
+
+_dumpfunc = {
+    "coach": dumps_intkey_one_val_per_row,
+    "group": dumps_intkey_one_val_per_row,
+    "team": dumps_intkey_one_val_per_row,
+    "tournament": dumps_intkey_one_val_per_row,
+}
+
+
+
+
 def rankings_file(reportNr, name):
   foldernum = int(reportNr) // 100 * 100
   foldername = f'{foldernum:0>7}'
@@ -101,18 +149,17 @@ def save_rankings(reportNr, name):
     f.write(dumps_one_obj_per_row(rankings_))
 
 
+
 def results_file(tournamentId):
   foldernum = int(tournamentId) // 1000 * 1000
   foldername = f'{foldernum:0>8}'
   filename = f'{tournamentId:0>8}.json'
   return srdatadir() / "results" / foldername / filename
 
-
 def delete_results(tournamentId):
   p = results_file(tournamentId)
   if p.is_file():
     p.unlink()  # delete file
-
 
 def load_results(tournamentId):
   p = results_file(tournamentId)
@@ -125,7 +172,6 @@ def load_results(tournamentId):
         for t, r in results_.items()
     }
 
-
 def save_results(tournamentId):
   strresults = sr.tournament.Schedule(tournamentId).strresults
   results_ = {T.id: s for T, s in strresults.items()}
@@ -135,46 +181,35 @@ def save_results(tournamentId):
     json.dump(results_, f, indent='\t', sort_keys=True)
 
 
-def save(name):
-  name = name.lower()
-  if name not in _dumpfunc:
-    s = json.dumps(
-        data[name],
-        ensure_ascii = False,
-        indent = "\t",
-        sort_keys = True,
-    )
-  else:
-    s = _dumpfunc[name](name)
-  srdatadir_ = srdatadir()
-  if not srdatadir_:
-    return False
-  with (srdatadir_ / f'{name}.json').open("w", encoding="utf8") as f:
-    f.write(s)
-  return True
 
 
-def dumps_intkey_one_val_per_row(name):
-  keyval_strings = ['"{k}": {j}'.format(
-          k=k,
-          j=json.dumps(v, ensure_ascii=False, sort_keys=True)
-      )
-      for k, v in sorted(data[name].items())]
-  s = "{\n" + ",\n".join(keyval_strings) + "\n}"
-  return s
+def fumbblapi_cache_schedule_file(tournamentId):
+  foldernum = int(tournamentId) // 1000 * 1000
+  foldername = f'{foldernum:0>8}'
+  filename = f'{tournamentId:0>8}.json'
+  return (
+      srdatadir() / "fumbblapi_cache" / "schedule"
+      / foldername / filename
+  )
 
-def dumps_one_obj_per_row(listofobjs):
-  substrings = [
-      json.dumps(o, ensure_ascii=False, sort_keys=True)
-      for o in listofobjs
-  ]
-  s = "[\n" + ",\n".join(substrings) + "\n]"
-  return s
+def delete_fumbblapi_cache_schedule(tournamentId):
+  p = fumbblapi_cache_schedule_file(tournamentId)
+  if p.is_file():
+    p.unlink()  # delete file
 
 
-_dumpfunc = {
-    "coach": dumps_intkey_one_val_per_row,
-    "group": dumps_intkey_one_val_per_row,
-    "team": dumps_intkey_one_val_per_row,
-    "tournament": dumps_intkey_one_val_per_row,
-}
+def load_fumbblapi_cache_schedule(tournamentId):
+  p = fumbblapi_cache_schedule_file(tournamentId)
+  if p.is_file():
+    with p.open() as f:
+      return json.load(f)
+
+def save_fumbblapi_cache_schedule(tournamentId):
+  obj = sr.fumbblapi.get__tournament_schedule(
+      tournamentId,
+      replace_with_fixed=False,
+  )
+  p = fumbblapi_cache_schedule_file(tournamentId)
+  p.parent.mkdir(parents=True, exist_ok=True)  # ensure dir
+  with p.open("w") as f:
+    json.dump(obj, f, indent='\t', sort_keys=True)
