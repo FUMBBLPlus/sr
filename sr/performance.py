@@ -136,12 +136,13 @@ class CoachPerformance(BasePerformance):
 
   @property
   def distinctresults(self):
+    Result = sr.tournament.Matchup.Result
     Schedule = sr.tournament.Schedule
     return {
-        result
+        (Result.none if item is None else item[0])
         for T in self.alltournaments
         for Te in self.allteams
-        for result in Schedule(T.id).results.get(Te, [])
+        for item in Schedule(T.id).results.get(Te, [])
     }
 
   @property
@@ -287,18 +288,17 @@ class TeamPerformance(BasePerformance):
 
   @property
   def distinctresults(self):
+    Result = sr.tournament.Matchup.Result
     Schedule = sr.tournament.Schedule
-    return {
-        result
-        for T in self.alltournaments
-        for result in Schedule(T.id).results.get(self.team, [])
-    }
-
-  @property
-  def fullresults(self):
-    return self.tournament.schedule.fullresults.get(
-        self.team, []
-    )
+    results = set()
+    for T in self.alltournaments:
+      for item in Schedule(T.id).results.get(self.team, []):
+        if item is None:
+          result = Result.none
+        else:
+          result = item[0]
+        results.add(result)
+    return results
 
   @property
   def levelperformances(self):
@@ -347,10 +347,6 @@ class TeamPerformance(BasePerformance):
     return self._points
 
   @property
-  def progression(self):
-    return self.tournament.schedule.results.get(self.team)
-
-  @property
   @_main_tournament_only
   def qualifierteamperformances(self):
     return {TeamPerformance(T.id, self.teamId)
@@ -360,9 +356,10 @@ class TeamPerformance(BasePerformance):
 
   @property
   def rawpoints(self):
+    Result = sr.tournament.Matchup.Result
     if self._rawpoints is ...:
-      progression = self.progression
-      if progression is None:
+      results = self.results
+      if not results:
         self._rawpoints = 0
         return 0
       parts0 = self.tournament.srpointsstr.split('|')
@@ -381,11 +378,12 @@ class TeamPerformance(BasePerformance):
           winnerpts = (parts2[-1] - parts2[-2]) // 4
           parts2[-1] -= winnerpts
         wskip = 0
-        normprog = reversed(list(enumerate(progression, 1)))
-        for round_, result in normprog:
+        normresults = reversed(list(enumerate(results, 1)))
+        for round_, item in normresults:
+          result, oppo, match = item
           if result in self.UNCLEAN_RESULTS:
             wskip += 1
-          elif result == sr.tournament.Matchup.Result.win:
+          elif result == Result.win:
             if wskip:
               wskip -= 1
             else:
@@ -402,14 +400,15 @@ class TeamPerformance(BasePerformance):
         parts2 = [int(s.strip()) for s in parts1[1].split('/')]
         winpts, drawpts, losspts = parts2
         pts = initialpts
-        for result in self.progression:
+        for item in self.results:
+          result, oppo, match = item
           if result in self.UNCLEAN_RESULTS:
             pts -= winpts + drawpts
-          elif result == sr.tournament.Matchup.Result.win:
+          elif result is Result.win:
             pts += winpts
-          elif result == sr.tournament.Matchup.Result.draw:
+          elif result is Result.draw:
             pts += drawpts
-          elif result == sr.tournament.Matchup.Result.loss:
+          elif result is Result.loss:
             pts += losspts
       if self.team is self.tournament.winner and winnerpts:
         pts += winnerpts
@@ -418,7 +417,7 @@ class TeamPerformance(BasePerformance):
 
   @property
   def results(self):
-    return self.tournament.schedule.results.get(self.team, [])
+    return list(self.iter_results())
 
   @property
   def sort_key(self):
@@ -482,3 +481,12 @@ class TeamPerformance(BasePerformance):
             totalpoints += points
       self._totalpoints = totalpoints
     return self._totalpoints
+
+  def iter_results(self):
+    Result = sr.tournament.Matchup.Result
+    li = self.tournament.schedule.results.get(self.team, [])
+    for item in li:
+      if item is None:
+        yield [Result.none, None, None]
+      else:
+        yield item

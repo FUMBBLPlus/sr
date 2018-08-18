@@ -66,10 +66,14 @@ class TableStartItem:
     return "\n"
 
   def bbcode(self):
-    return bbcode.otag(
-        "table",
-        "blackborder border2 bg=#e6ddc7"
-    )
+    parts = [
+        "[block=automargin, width=100%]",
+        bbcode.otag(
+            "table",
+            "blackborder border2 bg=#e6ddc7",
+        ),
+    ]
+    return "".join(parts)
 
 
 class TableEndItem:
@@ -80,7 +84,7 @@ class TableEndItem:
     return "\n"
 
   def bbcode(self):
-    return bbcode.ctag("table")
+    return bbcode.ctag("table") + bbcode.ctag("block")
 
 
 
@@ -230,10 +234,6 @@ class TeamPerformanceItem(Item):
     self.performance = performance
 
   @property
-  def current(self):
-    return (self.report.weekNr == sr.time.current_weekNr())
-
-  @property
   def tournament(self):
     return self.performance.tournament
 
@@ -295,7 +295,7 @@ class TeamPerformanceItem(Item):
     except IndexError:
       srnteams = ""
     results = "".join([
-        r.value for r in self.performance.results
+        item[0].value for item in self.performance.results
     ])
     iswinner = (team is self.tournament.winner)
     if iswinner:
@@ -359,18 +359,15 @@ class TeamPerformanceItem(Item):
     except IndexError:
       srnteams = ""
     resultparts = []
-    for result, matchup in self.performance.fullresults:
+    for item in self.performance.results:
+      result, oppo, match = item
       resultvalue = result.value
       if result is Result.none:
         resultvalue = self.BBCODENONERESULTCHAR
-      if matchup is not None:
-        match = matchup.match
-        if match is not None:
-          resultparts.append(
-              helper.bbcmatch(match, resultvalue)
-          )
-        else:
-          resultparts.append(resultvalue)
+      if match is not None:
+        resultparts.append(
+            helper.bbcmatch(match, resultvalue)
+        )
       else:
         resultparts.append(resultvalue)
     results = "".join(resultparts)
