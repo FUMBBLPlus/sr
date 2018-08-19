@@ -58,12 +58,20 @@ class NotePage(helper.NotePage):
         Times = str(times)
         Consec = str(consec)
         lasttimereport = sr.report.Report(lastreportNr)
-        LastTime = helper.bbcreport(
-            lasttimereport,
-            lasttimereport.date.strftime(sr.time.ISO_DATE_FMT)
-        )
+        if lasttimereport is sr.report.current_report():
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              "CURRENT"
+          )
+        else:
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              lasttimereport.enddate.strftime(
+                  sr.time.ISO_DATE_FMT
+              )
+          )
         Roster = team.roster.nameofweek(lasttimereport.weekNr)
-        if lasttimereport.weekNr == current_weekNr:
+        if lasttimereport is sr.report.current_report():
           Team = bbcode.b(Team)
           Roster = bbcode.b(Roster)
           Coach = bbcode.b(Coach)
@@ -133,12 +141,20 @@ class NotePage(helper.NotePage):
         Consec = str(consec)
         Best = str(best[team])
         lasttimereport = sr.report.Report(lastreportNr)
-        LastTime = helper.bbcreport(
-            lasttimereport,
-            lasttimereport.date.strftime(sr.time.ISO_DATE_FMT)
-        )
+        if lasttimereport is sr.report.current_report():
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              "CURRENT"
+          )
+        else:
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              lasttimereport.enddate.strftime(
+                  sr.time.ISO_DATE_FMT
+              )
+          )
         Roster = team.roster.nameofweek(lasttimereport.weekNr)
-        if lasttimereport.weekNr == current_weekNr:
+        if lasttimereport is sr.report.current_report():
           Team = bbcode.b(Team)
           Roster = bbcode.b(Roster)
           Coach = bbcode.b(Coach)

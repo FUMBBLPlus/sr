@@ -27,6 +27,8 @@ def font(text, family):
 def i(text):
   return f'[i]{str(text)}[/i]'
 
+def img(href):
+  return f'[img]{href}[/img]'
 
 def left(text):
   return f'{str(text)}'
@@ -97,7 +99,8 @@ def table(
         f = {"C": center, "L": left, "R": right}[align_[c]]
         d_td = {}
         if r == 0 and widths is not None:
-          d_td["width"] = widths[c]
+          if widths[c] is not None:
+            d_td["width"] = widths[c]
         if hasattr(record, "style"):
           d_td.update(style2dict(record.style))
         tdstyle = dict2style(d_td)

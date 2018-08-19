@@ -8,8 +8,7 @@ from .. import bbcode
 from .. import fumbblapi
 
 
-@sr.helper.idkey("link", str)
-class NotePage(metaclass=sr.helper.InstanceRepeater):
+class _NotePage(metaclass=sr.helper.InstanceRepeater):
 
   KEY = None
 
@@ -39,7 +38,7 @@ class NotePage(metaclass=sr.helper.InstanceRepeater):
       p1 = p0.parent / "templates" / f'{name}.bbcode'
       if p1.is_file():
         break
-    with p1.open() as f:
+    with p1.open(encoding="utf8") as f:
       return f.read()
 
 
@@ -65,6 +64,9 @@ class NotePage(metaclass=sr.helper.InstanceRepeater):
       sr.helper.S.note.edit(self.id, **note_kwargs)
     else:
       self.id = sr.helper.S.note.create(**note_kwargs)
+
+
+NotePage = sr.helper.idkey("link", str)(_NotePage)
 
 
 class FUMBBLYearNotePage(NotePage):
@@ -147,7 +149,10 @@ def bbcenterdate(tournament):
   if T.main.srenterweekNr is not None:
     report = sr.report.Report.ofweekNr(T.main.srenterweekNr)
     datestr = report.date.strftime(sr.time.ISO_DATE_FMT)
-    return bbcreport(report, datestr)
+    if T.main.srenterweekNr <= sr.time.current_weekNr():
+      return bbcreport(report, datestr)
+    else:
+      return datestr
   else:
     return ""
 
@@ -248,9 +253,12 @@ def bbctournament(
     tournament,
     boldface_titled=True,
     italic_notinyear=True,
+    name=None,
 ):
   T = tournament
-  s = bbcode.url(T.http, T.srname)
+  if name is None:
+    name = T.srname
+  s = bbcode.url(T.http, name)
   if boldface_titled and T.ismain and T.srtitle:
     s = bbcode.b(s)
   if italic_notinyear and T.ismain and T.fumbblyear_in is None:

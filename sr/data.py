@@ -11,6 +11,7 @@ INTKEYS = (
     "api_fixed_get__tournament_schedule",
     "group",
     "rostername",
+    "rostershorthand",
     "team",
     "tournament",
 )

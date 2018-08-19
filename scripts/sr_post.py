@@ -17,6 +17,12 @@ def queue_mainpage():
   postqueue.append((module.NotePage, {"updated": now}))
 
 
+def queue_halloffame_all():
+  queue_halloffame_topcoaches()
+  queue_halloffame_topteams()
+  queue_halloffame_famouscoaches()
+  queue_halloffame_famousteams()
+
 def queue_halloffame_topcoaches():
   module = sr.notepages.page["SR-Coach-Records"]
   postqueue.append((module.NotePage, {}))
@@ -41,7 +47,7 @@ def queue_pointspage_all():
     if row.upperNr or row.lowerNr:
       queue_pointspage_coach(row.Performer.name)
 
-def queue_pointspage_cleanup(coachName):
+def queue_pointspage_cleanup():
   module = sr.notepages.page["SR-Coach-Points-name"]
   ids = sr.data["coachpointsnote"]
   ids_taken = set(module.NotePage.coachpointsnotes.values())
@@ -73,7 +79,7 @@ def queue_reportpage_all():
   reportNrs = [
       reportNr
       for reportNr, weekNr in sr.report.reportNrs().items()
-      if weekNr <= urrent_weekNr
+      if weekNr <= current_weekNr
   ]
   queue_reportpage_custom(*reportNrs)
 
@@ -119,6 +125,9 @@ def queue_tournamentspage_unfinalized():
   fumbblyears = [y for y in sr.time.fumbblyears() if Y <= y]
   queue_tournamentspage_custom(*fumbblyears)
 
+def queue_tournamentspage_current():
+  queue_tournamentspage_custom(sr.time.current_fumbblyear())
+
 def queue_tournamentspage_custom(*fumbblyears):
   module = sr.notepages.page["SR-Tournaments-Yn"]
   postqueue.extend([
@@ -129,6 +138,20 @@ def queue_tournamentspage_custom(*fumbblyears):
 def queue_tournamentspage_pending():
   module = sr.notepages.page["SR-Tournaments-Pending"]
   postqueue.append((module.NotePage, {}))
+
+
+def queue_supplemental_all():
+  queue_rrr_mastery()
+  queue_xfl_mastery()
+
+def queue_rrr_mastery():
+  module = sr.notepages.page["RRR-Mastery"]
+  postqueue.append((module.NotePage, {}))
+
+def queue_xfl_mastery():
+  module = sr.notepages.page["XFL-Mastery"]
+  postqueue.append((module.NotePage, {}))
+
 
 
 def postall():
@@ -163,6 +186,7 @@ def post_after_turntime():
   queue_halloffame_topteams()
   queue_halloffame_famouscoaches()
   queue_halloffame_famousteams()
+  queue_supplemental_all()
   postall()
 
 
@@ -305,12 +329,44 @@ def post_reportspage():
   postall()
 
 
+def post_supplemental():
+  print("Which hall of fame pages?")
+  options = {
+    "a": (
+        "all of them",
+         queue_supplemental_all,
+    ),
+    "rrr": (
+        "RRR Mastery",
+        queue_rrr_mastery,
+    ),
+    "xfl": (
+        "XFL Mastery",
+        queue_xfl_mastery,
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
+  }
+  for o, (message, f) in options.items():
+    print(f'  {o.upper()}: {message}')
+  response = sr.helper.CallerInput(
+      options = {o: f for o, (message, f) in options.items()},
+  )()
+  postall()
+
+
 def post_tournamentspage():
   print("Which tournaments pages?")
   options = {
     "a": (
         "all of them",
         queue_tournamentspage_added,
+    ),
+    ".": (
+        "current",
+        queue_tournamentspage_current,
     ),
     "u": (
         "those with unfinalized fumbblyear",
@@ -364,6 +420,10 @@ def main():
     "h": (
         "post hall of fame page(s)",
         post_halloffame,
+    ),
+    "s": (
+        "post supplemental page(s)",
+        post_supplemental,
     ),
     "m": (
         "post mainpage",

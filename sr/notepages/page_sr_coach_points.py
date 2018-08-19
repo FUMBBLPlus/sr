@@ -10,7 +10,7 @@ class Item:
   HASBBCODE = True
   HASSTR = True
   STRSEPARATOR = " "
-  charwidths = (30, 3, 3, 3, 3, 10, 4, 3, 4, 8, 4, 8)
+  charwidths = (30, 3, 3, 3, 3, 11, 4, 3, 4, 8, 4, 8)
   aligns = aligns = "LCCCCLRLRLRL"
   values = ("",) * len(charwidths)
 
@@ -127,7 +127,7 @@ class HeaderItem(Item):
       "Rnk",
       "Lvl",
       "Tms",
-      "Results",
+      "Performance",
       "Pbas",
       "FSG",
       "Ptea",
@@ -142,7 +142,7 @@ class HeaderItem(Item):
       bbcode.center("Rnk"),
       bbcode.center("Lvl"),
       bbcode.center("Tms"),
-      "Results",
+      "Performance",
       bbcode.center(
           f'Pts{bbcode.sub("B")}{bbcode.THREEPEREMSPACE}'
       ),
@@ -195,7 +195,7 @@ class HeaderItem(Item):
 class MainTournamentItem(Item):
 
   aligns = "L"
-  charwidths = (94,)
+  charwidths = (95,)
 
   def __init__(self, coachperformance):
       self.coachperformance = coachperformance
@@ -225,7 +225,7 @@ class TeamItem(Item):
   BBCODEINDENT = bbcode.ENSPACE
   INDENT = "  "
   aligns = "L"
-  charwidths = (94,)
+  charwidths = (95,)
 
   def __init__(self, team):
       self.team = team
@@ -455,7 +455,7 @@ class TeamPerformanceItem(Item):
 class FooterItem(Item):
 
   aligns = "LRL"
-  charwidths = (80, 4, 8)
+  charwidths = (81, 4, 8)
 
   def __init__(self, coachpoints):
     self.coachpoints = coachpoints
@@ -634,7 +634,7 @@ class NotePage(helper.NotePage):
 
   def content(self):
     title = (
-        "SR Rankings Points of Coach "
+        "Points of Coach "
         + helper.bbccoach(self.coach)
     )
     reportlink = (
@@ -648,7 +648,7 @@ class NotePage(helper.NotePage):
     return super().content(
         title = title,
         reportlink = reportlink,
-        nostr = f'No. {self.fullrankingsrow.Nr}',
+        nostr = f'Nr. {self.fullrankingsrow.Nr}',
         table = table,
         nummaintournaments = self.fullrankingsrow.T,
         nummatches = self.fullrankingsrow.G,

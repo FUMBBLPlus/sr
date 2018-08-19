@@ -20,8 +20,8 @@ class NotePage(helper.FUMBBLYearNotePage):
   def table(self):
     header=[
         "Report",
-        "Tournaments Entered",
-        "Tournaments Exited",
+        "Tournaments In",
+        "Tournaments Out",
         "Top 3 Coaches",
         "Top 3 Teams",
     ]
@@ -102,6 +102,6 @@ class NotePage(helper.FUMBBLYearNotePage):
   @property
   def title2(self):
     return (
-        "OBC Sport SR Rankings Reports of FUMBBL Year "
+        "Reports of FUMBBL Year "
         f'{roman.to_roman(self.fumbblyear)}'
     )

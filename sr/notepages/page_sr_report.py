@@ -89,9 +89,18 @@ class NotePage(helper.NotePage):
 
   @property
   def title2(self):
-    return f'OBC Sport SR Rankings Report {self.nr}'
+    return f'Report {self.nr}'
+
+  @property
+  def coachtablewidth(self):
+    current = (self.report is sr.report.current_report())
+    if current:
+      return "522px"
+    else:
+      return "496px"
 
   def coachtable(self, house):
+    current = (self.report is sr.report.current_report())
     header=[
         "Nr",
         "Move",
@@ -102,6 +111,8 @@ class NotePage(helper.NotePage):
         "T",
         "G",
     ]
+    if current:
+      header.insert(4, "")
     rankings = self.report.coachfullrankings
     def rowgen():
       prevNr = None
@@ -115,10 +126,22 @@ class NotePage(helper.NotePage):
           Pw = (str(r.Pw) if r.Pw else "")
           T = str(r.T)
           G = str(r.G)
-          yield (Nr, Move, Coach, P, PΔ, Pw, T, G)
+          if current:
+            Plink = helper.bbcnoteurl(
+                f'SR-Coach-Points-{r.Performer.name}',
+                name=bbcode.img(
+                    f'/i/{sr.settings["artwork.table"]}'
+                ),
+            )
+            yield (Nr, Move, Coach, P, Plink, PΔ, Pw, T, G)
+          else:
+            yield (Nr, Move, Coach, P, PΔ, Pw, T, G)
           prevNr = r.Nr
     rows = tuple(rowgen())
-    align="CCLCCCCC"
+    if current:
+      align="CCLCLCCCC"
+    else:
+      align="CCLCCCCC"
     widths = [
         "46px",
         "46px",
@@ -129,6 +152,8 @@ class NotePage(helper.NotePage):
         "37px",
         "37px",
     ]
+    if current:
+      widths.insert(4, "26px")
     return bbcode.table(
         rows,
         align=align,
@@ -141,6 +166,7 @@ class NotePage(helper.NotePage):
         coachlowerminP = sr.settings["coach.lower.minP"],
         coachlowertable = self.coachtable("lower"),
         coachrlowerminT = self.report.coachrankings_lower_minT,
+        coachtablewidth = self.coachtablewidth,
         coachuppermaxNr = sr.settings["coach.upper.maxNr"],
         coachupperminP = sr.settings["coach.upper.minP"],
         coachuppertable = self.coachtable("upper"),

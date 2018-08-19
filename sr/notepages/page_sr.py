@@ -19,11 +19,11 @@ class NotePage(helper.NotePage):
     reports = [rnote.of_fumbblyear(y) for y in fumbblyears]
     tnote = sr.notepages.page["SR-Tournaments-Yn"].NotePage
     tournaments = [tnote.of_fumbblyear(y) for y in fumbblyears]
-    kwargs["reports"] = "\n | \\\n".join(
+    kwargs["reports"] = "\n • \\\n".join(
         f'[url={p.url}]{roman.to_roman(p.fumbblyear)}[/url]\\'
         for p in reports
     )
-    kwargs["tournaments"] = "\n | \\\n".join(
+    kwargs["tournaments"] = "\n • \\\n".join(
         f'[url={p.url}]{roman.to_roman(p.fumbblyear)}[/url]\\'
         for p in tournaments
     )

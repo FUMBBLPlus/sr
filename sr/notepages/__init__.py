@@ -1,5 +1,6 @@
 from . import helper
 
+from . import page_rrr_mastery
 from . import page_sr
 from . import page_sr_coach_famous
 from . import page_sr_coach_points
@@ -10,8 +11,10 @@ from . import page_sr_team_famous
 from . import page_sr_team_records
 from . import page_sr_tournaments
 from . import page_sr_tournaments_pending
+from . import page_xfl_mastery
 
 page = {
+    "RRR-Mastery": page_rrr_mastery,
     "SR": page_sr,
     "SR-Coach-Famous": page_sr_coach_famous,
     "SR-Coach-Records": page_sr_coach_records,
@@ -22,8 +25,10 @@ page = {
     "SR-Team-Records": page_sr_team_records,
     "SR-Tournaments-Yn": page_sr_tournaments,
     "SR-Tournaments-Pending": page_sr_tournaments_pending,
+    "XFL-Mastery": page_xfl_mastery,
 }
 
+del page_rrr_mastery
 del page_sr
 del page_sr_coach_famous
 del page_sr_coach_points
@@ -34,3 +39,4 @@ del page_sr_team_famous
 del page_sr_team_records
 del page_sr_tournaments
 del page_sr_tournaments_pending
+del page_xfl_mastery

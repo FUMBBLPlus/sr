@@ -26,8 +26,8 @@ class NotePage(helper.FUMBBLYearNotePage):
         "Tms",
         "Points",
         "FSG",
-        "Enter Date",
-        "Exit Date",
+        "In Date",
+        "Out Date",
     ]
     rows = list(
         [
@@ -65,7 +65,7 @@ class NotePage(helper.FUMBBLYearNotePage):
   @property
   def title2(self):
     return (
-        "OBC Sport SR Rankings Tournaments of FUMBBL Year "
+        "Tournaments of FUMBBL Year "
         f'{roman.to_roman(self.fumbblyear)}'
     )
 

@@ -68,11 +68,19 @@ class NotePage(helper.NotePage):
         Times = str(times)
         Consec = str(consec)
         lasttimereport = sr.report.Report(lastreportNr)
-        LastTime = helper.bbcreport(
-            lasttimereport,
-            lasttimereport.date.strftime(sr.time.ISO_DATE_FMT)
-        )
-        if lasttimereport.weekNr == current_weekNr:
+        if lasttimereport is sr.report.current_report():
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              "CURRENT"
+          )
+        else:
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              lasttimereport.enddate.strftime(
+                  sr.time.ISO_DATE_FMT
+              )
+          )
+        if lasttimereport is sr.report.current_report():
           Coach = bbcode.b(Coach)
           Times = bbcode.b(Times)
           Consec = bbcode.b(Consec)
@@ -135,11 +143,19 @@ class NotePage(helper.NotePage):
         Consec = str(consec)
         Best = str(best[coach])
         lasttimereport = sr.report.Report(lastreportNr)
-        LastTime = helper.bbcreport(
-            lasttimereport,
-            lasttimereport.date.strftime(sr.time.ISO_DATE_FMT)
-        )
-        if lasttimereport.weekNr == current_weekNr:
+        if lasttimereport is sr.report.current_report():
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              "CURRENT"
+          )
+        else:
+          LastTime = helper.bbcreport(
+              lasttimereport,
+              lasttimereport.enddate.strftime(
+                  sr.time.ISO_DATE_FMT
+              )
+          )
+        if lasttimereport is sr.report.current_report():
           Coach = bbcode.b(Coach)
           Times = bbcode.b(Times)
           Consec = bbcode.b(Consec)
