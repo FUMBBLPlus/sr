@@ -14,7 +14,11 @@ INTKEYS = (
     "team",
     "tournament",
 )
-SETS = "fillerteams", "observed_groups"
+SETS = (
+    "fillerteams",
+    "observed_groups",
+    "coachpointsnote",
+)
 
 curr_path = pathlib.Path(__file__).parent
 
@@ -60,8 +64,12 @@ reload()
 def save(name):
   name = name.lower()
   if name not in _dumpfunc:
+    if name in SETS:
+      data_ = sorted(data[name])
+    else:
+      data_ = data[name]
     s = json.dumps(
-        data[name],
+        data_,
         ensure_ascii = False,
         indent = "\t",
         sort_keys = True,

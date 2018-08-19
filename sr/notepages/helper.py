@@ -223,12 +223,13 @@ def bbcnteams(tournament):
       return sr.tournament.SRClass.NONE
   return ""
 
-def bbcslot(sg, nr, available):
+def bbcslot(sgname, nr, available):
+  sg = sr.slot.SlotGroup(sgname.upper())
   if sg is sr.slot.SlotGroup("W"):
-    return sg.name
+    return sgname
   else:
     return (
-        f'{sg.name}[size=7]'
+        f'{sgname}[size=7]'
         "[block display=inline position=relative]"
         "[block display=inline position=absolute top=-0.5ex]"
         f'{nr}[/block]'

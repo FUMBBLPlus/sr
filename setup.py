@@ -62,11 +62,11 @@ setup(
   extras_require = {
   },
   scripts = [
-      "scripts/sr_pm.py",
-      "scripts/sr_points.py",
+      "scripts/sr_coachpoints.py",
       "scripts/sr_post.py",
       "scripts/sr_set_login.py",
       "scripts/sr_set_srdatadir.py",
+      "scripts/sr_tournamentpoints.py",
       "scripts/sr_update_tournaments.py",
   ],
   )

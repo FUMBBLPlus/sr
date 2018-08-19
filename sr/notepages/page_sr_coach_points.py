@@ -1,20 +1,17 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import itertools
-import sys
 
 import sr
-from sr import bbcode
-from sr.notepages import helper
+from .. import bbcode
+from . import helper
 
 
 class Item:
 
   HASBBCODE = True
+  HASSTR = True
   STRSEPARATOR = " "
-  charwidths = (30, 3, 3, 3, 3, 10, 4, 4, 8, 4, 8)
-  aligns = aligns = "LCCCCLRRLRL"
+  charwidths = (30, 3, 3, 3, 3, 10, 4, 3, 4, 8, 4, 8)
+  aligns = aligns = "LCCCCLRLRLRL"
   values = ("",) * len(charwidths)
 
   def __str__(self):
@@ -61,6 +58,7 @@ class EmptyItem(LineItem):
 class TableStartItem:
 
   HASBBCODE = True
+  HASSTR = True
 
   def __str__(self):
     return "\n"
@@ -73,12 +71,13 @@ class TableStartItem:
             "blackborder border2 bg=#e6ddc7",
         ),
     ]
-    return "".join(parts)
+    return ("\\" + bbcode.N).join(parts)
 
 
 class TableEndItem:
 
   HASBBCODE = True
+  HASSTR = True
 
   def __str__(self):
     return "\n"
@@ -91,6 +90,7 @@ class TableEndItem:
 class MajorSeparatorItem:
 
   HASBBCODE = False
+  HASSTR = True
 
   def __str__(self):
     return "\n"
@@ -100,17 +100,23 @@ class MajorSeparatorItem:
 class CoachItem(Item):
 
   aligns = "C"
-  charwidths = (90,)
+  charwidths = (94,)
 
-  def __init__(self, coach):
+  def __init__(self, coach, report):
       self.coach = coach
+      self.report = report
 
   @property
   def values(self):
       return (f'[{self.coach.id}] {self.coach.name}',)
 
   def bbcode(self):
-    return bbcode.center(helper.bbccoach(self.coach))
+    parts = []
+    parts.append(bbcode.center(bbcode.size(bbcode.b(
+        helper.bbccoach(self.coach)
+    ), 16)))
+    parts.append(bbcode.N * 2)
+    return ("\\" + bbcode.N).join(parts)
 
 
 class HeaderItem(Item):
@@ -189,7 +195,7 @@ class HeaderItem(Item):
 class MainTournamentItem(Item):
 
   aligns = "L"
-  charwidths = (90,)
+  charwidths = (94,)
 
   def __init__(self, coachperformance):
       self.coachperformance = coachperformance
@@ -219,7 +225,7 @@ class TeamItem(Item):
   BBCODEINDENT = bbcode.ENSPACE
   INDENT = "  "
   aligns = "L"
-  charwidths = (90,)
+  charwidths = (94,)
 
   def __init__(self, team):
       self.team = team
@@ -417,8 +423,11 @@ class TeamPerformanceItem(Item):
     parts.append(bbcode.ctag("td"))
     parts.append(bbcode.otag("td"))
     if d["SlotT"]:
-      parts.append(helper.bbcslot((
-          d["SlotT"] if d["CleanT"] else d["SlotT"].lower()),
+      parts.append(helper.bbcslot(
+          (
+              d["SlotT"].name if d["CleanT"]
+              else d["SlotT"].name.lower()
+          ),
           d["SlotT_n"],
           d["SlotT_N"],
       ))
@@ -429,8 +438,11 @@ class TeamPerformanceItem(Item):
     parts.append(bbcode.ctag("td"))
     parts.append(bbcode.otag("td"))
     if d["SlotC"]:
-      parts.append(helper.bbcslot((
-          d["SlotC"] if d["CleanC"] else d["SlotC"].lower()),
+      parts.append(helper.bbcslot(
+          (
+              d["SlotC"].name if d["CleanC"]
+              else d["SlotC"].name.lower()
+          ),
           d["SlotC_n"],
           d["SlotC_N"],
       ))
@@ -442,12 +454,20 @@ class TeamPerformanceItem(Item):
 
 class FooterItem(Item):
 
+  aligns = "LRL"
+  charwidths = (80, 4, 8)
+
   def __init__(self, coachpoints):
     self.coachpoints = coachpoints
     super().__init__()
 
-  def __str__(self):
-    return ""
+  @property
+  def values(self):
+    return (
+        "Total SR Coach Ranking Points",
+        self.coachpoints,
+        "",
+    )
 
   def bbcode(self):
     parts = []
@@ -471,17 +491,19 @@ def iteritems(reportNr=None, coachName=None):
     report = sr.report.current_report()
   else:
     report = sr.report.Report(int(reportNr))
-  coachrankings = report.coachrankings
+  CR = report.coachrankings
+  CFR = report.coachfullrankings
   if coachName is not None:
-    coachrankings = {
-        C: R for C, R in coachrankings.items()
+    CR = {
+        C: R for C, R in CR.items()
         if C.name == coachName
     }
-  for i, (C, R) in enumerate(coachrankings.items()):
+  for i, (C, R) in enumerate(CR.items()):
+    FR = CFR[R.rownum - 1]  # row index
     if 0 < i:
       yield MajorSeparatorItem()
     if coachName is None:
-      yield CoachItem(C)
+      yield CoachItem(C, report)
     coachpoints = 0
     yield TableStartItem()
     yield HeaderItem()
@@ -502,6 +524,8 @@ def iteritems(reportNr=None, coachName=None):
           tpi = TeamPerformanceItem(report, performance)
           yield tpi
           coachpoints += tpi.raw_values["PtsC"]
+    yield LineItem()
+    assert (coachpoints == FR.P)
     yield FooterItem(coachpoints)
     yield TableEndItem()
 
@@ -521,9 +545,13 @@ def bbcode_points(reportNr=None, coachName=None):
   return f'\\{bbcode.N}'.join(subgen())
 
 
-def print_points(reportNr=None, coachName=None):
+def print_points(reportNr=None, coachName=None, onebyone=True):
   for item in iteritems(reportNr, coachName):
+    if not item.HASSTR:
+      continue
     print(item)
+    if item.__class__.__name__ == "TableEndItem" and onebyone:
+      input("Press Enter to continue...")
 
 
 def save_points(reportNr=None, coachName=None):
@@ -538,9 +566,111 @@ def save_points(reportNr=None, coachName=None):
     ))
 
 
+class NotePage(helper.NotePage):
+  KEY = "SR-Coach-Points-name"
 
-if __name__ == "__main__":
-  if len(sys.argv) == 1:
-    save_points()
-  else:
-    save_points(*sys.argv[1:])
+  tags = sr.settings["tablenote.tags"]
+
+  coachpointsnotes = {}
+  report = sr.report.current_report()
+
+  def __init__(self, link):
+    super().__init__(link)
+    self._coach = ...
+    self._fullrankingsrow = ...
+
+
+  @classmethod
+  def of_coach(cls, C):
+    link = f'SR-Coach-Points-{C.name}'
+    instance = cls(link)
+    instance._coach = C
+    return instance
+
+  @classmethod
+  def of_coachName(cls, coachName):
+    link = f'SR-Coach-Points-{coachName}'
+    instance = cls(link)
+    return instance
+
+  @property
+  def coach(self):
+    if self._coach is ...:
+      a = len("SR-Coach-Points-")
+      C = sr.coach.Coach.by_name(self.link[a:])
+      self._coach = C
+    return self._coach
+
+  @property
+  def fullrankingsrow(self):
+    if self._fullrankingsrow is ...:
+      CR = self.report.coachrankings
+      R = CR[self.coach]
+      CFR = self.report.coachfullrankings
+      self._fullrankingsrow = CFR[R.rownum - 1]  # row index
+    return self._fullrankingsrow
+
+  @property
+  def id(self):
+    if self.coach in self.__class__.coachpointsnotes:
+      return self.__class__.coachpointsnotes[self.coach]
+    else:
+      ids = sr.data["coachpointsnote"]
+      ids_taken = set(self.__class__.coachpointsnotes.values())
+      ids_available = ids - ids_taken
+      if ids_available:
+        i = ids_available.pop()
+        self.__class__.coachpointsnotes[self.coach] = i
+      else:
+        i = 0
+      return i
+  @id.setter
+  def id(self, value):
+    self.__class__.coachpointsnotes[self.coach] = value
+    ids = sr.data["coachpointsnote"]
+    if value not in ids:
+      sr.data["coachpointsnote"].add(value)
+      sr._data.save("coachpointsnote")
+
+  def content(self):
+    title = (
+        "SR Rankings Points of Coach "
+        + helper.bbccoach(self.coach)
+    )
+    reportlink = (
+        "Report "
+        + helper.bbcreport(self.report)
+    )
+    table = bbcode_points(
+        reportNr=self.report.nr,
+        coachName=self.coach.name,
+    )
+    return super().content(
+        title = title,
+        reportlink = reportlink,
+        nostr = f'No. {self.fullrankingsrow.Nr}',
+        table = table,
+        nummaintournaments = self.fullrankingsrow.T,
+        nummatches = self.fullrankingsrow.G,
+    )
+
+
+class CleanupNotePage:
+
+  link = ""
+  tags = sr.settings["tablenote.tags"]
+
+  def __init__(self, id_):
+    self.id_ = id_
+
+  @property
+  def id(self):
+    return self._id
+
+  @sr.helper.must_logged_in
+  def post(self):
+    note_kwargs = dict(
+        title = "*** SR Table Placeholder ***",
+        tags = self.tags,
+    )
+    sr.helper.S.note.edit(self.id, **note_kwargs)

@@ -136,7 +136,7 @@ def main(tournaments, filter_):
 
 def usage():
   line1 = (
-      "usage: sr_points.py "
+      "usage: sr_tournamentpoints.py "
       "<tournament(s) parameter(s)> [filter=<filtername>]"
   )
   line2 = (

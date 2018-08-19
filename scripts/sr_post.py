@@ -34,6 +34,31 @@ def queue_halloffame_famousteams():
   postqueue.append((module.NotePage, {}))
 
 
+def queue_pointspage_all():
+  module = sr.notepages.page["SR-Coach-Points-name"]
+  report = module.NotePage.report
+  for row in report.coachfullrankings:
+    if row.upperNr or row.lowerNr:
+      queue_pointspage_coach(row.Performer.name)
+
+def queue_pointspage_cleanup(coachName):
+  module = sr.notepages.page["SR-Coach-Points-name"]
+  ids = sr.data["coachpointsnote"]
+  ids_taken = set(module.NotePage.coachpointsnotes.values())
+  ids_available = ids - ids_taken
+  if ids_available:
+    postqueue.extend([
+        (module.CleanupNotePage(i), {})
+        for i in ids_available
+    ])
+
+def queue_pointspage_coach(coachName):
+  module = sr.notepages.page["SR-Coach-Points-name"]
+  postqueue.append(
+      (module.NotePage.of_coachName(coachName), {})
+  )
+
+
 def queue_reportpage_after_turntime():
   c = sr.report.current_report()
   p, n = c.prevnext
@@ -112,14 +137,23 @@ def postall():
 
 def postone():
   notepageobj, kwargs = postqueue.popleft()
-  print(f'Posting {notepageobj.link}...', end="\r")
+  id_ = notepageobj.id or ".."
+  print(
+      f'Posting [{id_}] {notepageobj.link}...',
+      end="\r",
+  )
   sys.stdout.flush()
   notepageobj.post(**kwargs)
-  print(f'Posting {notepageobj.link} [DONE]')
+  print(
+      f'Posting [{notepageobj.id}] {notepageobj.link} [DONE]',
+  )
   sys.stdout.flush()
 
 
 def post_after_turntime():
+  queue_pointspage_all()
+  postall()
+  queue_pointspage_cleanup()
   queue_reportpage_after_turntime()
   queue_reportspage_after_turntime()
   queue_tournamentspage_unfinalized()
@@ -159,6 +193,36 @@ def post_halloffame():
     "ft": (
         "Famous Teams",
         queue_halloffame_famousteams,
+    ),
+    "e": (
+        "exit",
+        lambda: None,
+    ),
+  }
+  for o, (message, f) in options.items():
+    print(f'  {o.upper()}: {message}')
+  response = sr.helper.CallerInput(
+      options = {o: f for o, (message, f) in options.items()},
+  )()
+  postall()
+
+
+def post_pointspage():
+  print("Whose points pages?")
+  options = {
+    "a": (
+        "all of them",
+        queue_pointspage_all,
+    ),
+    "x": (
+        "cleanup",
+        queue_pointspage_cleanup,
+    ),
+    "c": (
+        "specific coach",
+        lambda: queue_pointspage_coach(
+            sr.helper.Input("name")()
+        ),
     ),
     "e": (
         "exit",
@@ -280,6 +344,10 @@ def main():
     "tt": (
         "post all pages after turn time",
         post_after_turntime,
+    ),
+    "p": (
+        "post coach points page(s)",
+        post_pointspage,
     ),
     "r1": (
         "post report page(s)",
