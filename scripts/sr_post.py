@@ -116,7 +116,7 @@ def queue_reportspage_custom(*fumbblyears):
   ])
 
 
-def queue_tournamentspage_added():
+def queue_tournamentspage_all():
   queue_tournamentspage_custom(*sr.time.fumbblyears())
 
 def queue_tournamentspage_unfinalized():
@@ -141,15 +141,15 @@ def queue_tournamentspage_pending():
 
 
 def queue_supplemental_all():
-  queue_rrr_mastery()
-  queue_xfl_mastery()
+  queue_rrr_masters()
+  queue_xfl_masters()
 
-def queue_rrr_mastery():
-  module = sr.notepages.page["RRR-Mastery"]
+def queue_rrr_masters():
+  module = sr.notepages.page["RRR-Masters"]
   postqueue.append((module.NotePage, {}))
 
-def queue_xfl_mastery():
-  module = sr.notepages.page["XFL-Mastery"]
+def queue_xfl_masters():
+  module = sr.notepages.page["XFL-Masters"]
   postqueue.append((module.NotePage, {}))
 
 
@@ -182,10 +182,21 @@ def post_after_turntime():
   queue_tournamentspage_unfinalized()
   queue_tournamentspage_pending()
   queue_mainpage()
-  queue_halloffame_topcoaches()
-  queue_halloffame_topteams()
-  queue_halloffame_famouscoaches()
-  queue_halloffame_famousteams()
+  queue_halloffame_all()
+  queue_supplemental_all()
+  postall()
+
+
+def post_all():
+  queue_pointspage_all()
+  postall()
+  queue_pointspage_cleanup()
+  queue_reportpage_all()
+  queue_reportspage_all()
+  queue_tournamentspage_all()
+  queue_tournamentspage_pending()
+  queue_mainpage()
+  queue_halloffame_all()
   queue_supplemental_all()
   postall()
 
@@ -337,12 +348,12 @@ def post_supplemental():
          queue_supplemental_all,
     ),
     "rrr": (
-        "RRR Mastery",
-        queue_rrr_mastery,
+        "RRR Masters",
+        queue_rrr_masters,
     ),
     "xfl": (
-        "XFL Mastery",
-        queue_xfl_mastery,
+        "XFL Masters",
+        queue_xfl_masters,
     ),
     "e": (
         "exit",
@@ -362,7 +373,7 @@ def post_tournamentspage():
   options = {
     "a": (
         "all of them",
-        queue_tournamentspage_added,
+        queue_tournamentspage_all,
     ),
     ".": (
         "current",
@@ -400,6 +411,10 @@ def main():
     "tt": (
         "post all pages after turn time",
         post_after_turntime,
+    ),
+    "a": (
+        "post all pages",
+        post_all,
     ),
     "p": (
         "post coach points page(s)",

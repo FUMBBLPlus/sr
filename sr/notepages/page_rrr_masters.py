@@ -219,5 +219,5 @@ class _NotePage(helper._NotePage):
 
 
 NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "RRR-Mastery"
+    "RRR-Masters"
 )  # singleton

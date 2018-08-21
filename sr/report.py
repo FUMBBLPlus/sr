@@ -276,6 +276,12 @@ class Report(metaclass=sr.helper.InstanceRepeater):
 
 
 
+def all():
+  return tuple(
+      Report(reportNr)
+      for reportNr in list(reportNrs())[:-1]
+  )
+
 
 def current_report():
   return Report.ofweekNr()

@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import sys
 
 import sr
 
 
 if __name__ == "__main__":
-  params = [json.loads(a) for a in sys.argv[2:]]
+  params = [
+      (int(a) if a.isdecimal() else a)
+      for a in sys.argv[2:]
+  ]
   m = sr.notepages.page["SR-Coach-Points-name"]
   if len(sys.argv) == 1:
     print("Please wait...")

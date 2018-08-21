@@ -287,18 +287,22 @@ class TeamPerformance(BasePerformance):
     )
 
   @property
-  def distinctresults(self):
+  def allresults(self):
     Result = sr.tournament.Matchup.Result
     Schedule = sr.tournament.Schedule
-    results = set()
-    for T in self.alltournaments:
+    results = list()
+    for T in sorted(self.alltournaments):
       for item in Schedule(T.id).results.get(self.team, []):
         if item is None:
           result = Result.none
         else:
           result = item[0]
-        results.add(result)
+        results.append(result)
     return results
+
+  @property
+  def distinctresults(self):
+    return set(self.allresults)
 
   @property
   def levelperformances(self):
@@ -329,7 +333,7 @@ class TeamPerformance(BasePerformance):
   def nummatches(self):
     return len([
         r for r in self.results
-        if r in self.MATCH_RESULTS
+        if r[0] in self.MATCH_RESULTS
     ])
 
   @property

@@ -5,9 +5,9 @@ import re
 import sr
 from .. import bbcode
 from . import helper
-from . import page_rrr_mastery
+from . import page_rrr_masters
 
-class _NotePage(page_rrr_mastery._NotePage):
+class _NotePage(page_rrr_masters._NotePage):
 
   def iter_teamperformances(self):
     groupIds = 2410, 10407
@@ -29,11 +29,11 @@ class _NotePage(page_rrr_mastery._NotePage):
         # XFL V WOOD ELF / Cheech n Chongs Elf Dreams
         # XFL VI GOBLIN / Doomy Diggers
         if sh != winner_sh:
-          print(T, TP.team)
+          #print(T, TP.team)
           continue
         yield TP
 
 
 NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "XFL-Mastery"
+    "XFL-Masters"
 )  # singleton
