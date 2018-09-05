@@ -168,8 +168,10 @@ def input_level(T):
       continue
     if I != "":
       level, prev_level = I, T.level
+      if prev_level is None:
+        prev_level = 1
+      T.level = level
       if T.rank in ("MA", "MI") and level < prev_level:
-        T.level = level
         for T2 in set(T.qualifiers):
           if T2.level is not None and T.level <= T2.level:
             T2.main = None
@@ -179,15 +181,13 @@ def input_level(T):
               ' is now unknown.'
             ))
       elif T.rank in ("MA", "MI") and prev_level < level:
-        T.level = level
         inpcodes.add(2931)
       elif T.rank in ("QU") and prev_level < level:
-        T.level = level
-        main = T.main
-        if main.level is not None:
+        if T.main and main.level is not None:
           if main.level <= level:
             T.main = None
-            print('Main tournament is now unknown.')
+        if not T.main:
+          print('Main tournament is now unknown.')
     break
 
 

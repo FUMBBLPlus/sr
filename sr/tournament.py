@@ -393,11 +393,13 @@ class SRClass(metaclass=sr.helper.InstanceRepeater):
   MAJOR = "MA"
   MINOR = "MI"
   QUALIFIER = "QU"
-  RANKS = (MAJOR, MINOR, QUALIFIER)
+  RANKS = (MAJOR, MINOR, QUALIFIER, NONE)
   MAX_LEVEL = 4
 
   @classmethod
   def _level_fgetvalcast(cls, value):
+    if value is None:
+      return None
     return int(value)
   @classmethod
   def _level_beforefset(cls, value):
@@ -407,6 +409,8 @@ class SRClass(metaclass=sr.helper.InstanceRepeater):
     return value_
   @classmethod
   def _rank_fgetvalcast(cls, value):
+    if value is None:
+      return None
     return value.upper()
   @classmethod
   def _rank_beforefset(cls, value):
@@ -1015,7 +1019,10 @@ def changed():
 def enters(weekNr):
   def subgen():
     for T in added():
-      srexitweekNr = T.main.srdatasrenterweekNr
+      main = T.main
+      if not main:
+        continue
+      srexitweekNr = main.srdatasrenterweekNr
       if weekNr == srexitweekNr:
         yield T
   return tuple(subgen())
@@ -1025,7 +1032,10 @@ def enters(weekNr):
 def exits(weekNr):
   def subgen():
     for T in added():
-      srexitweekNr = T.main.srdatasrexitweekNr
+      main = T.main
+      if not main:
+        continue
+      srexitweekNr = main.srdatasrexitweekNr
       if weekNr == srexitweekNr:
         yield T
   return tuple(subgen())

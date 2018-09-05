@@ -661,7 +661,7 @@ class CleanupNotePage:
   tags = sr.settings["tablenote.tags"]
 
   def __init__(self, id_):
-    self.id_ = id_
+    self._id = id_
 
   @property
   def id(self):
