@@ -17,7 +17,7 @@ ISO_FMT_F = "%Y-%m-%dT%H:%M:%S.%f"
 S_DELIM_ISO_FMT_S = ISO_DATE_FMT + " " + ISO_TIME_FMT_S
 
 ZERODATE = datetime.date(2002, 12, 30)
-ZEROTIME = TZ.localize(datetime.datetime(2002, 12, 30, 8, 00))
+ZEROTIME = TZ.localize(datetime.datetime(2002, 12, 30, 0, 00))
 
 MICROSECOND = datetime.timedelta(microseconds=1)
 ONEDAY = datetime.timedelta(1)
