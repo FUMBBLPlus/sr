@@ -278,7 +278,7 @@ class Schedule(metaclass=sr.helper.InstanceRepeater):
     if self.tournament.status == "completed":
       # As every Matchup.srfinished access may imply an API
       # request for match data, I try to optimize the search by
-      # starting with the last round and go to the previos if
+      # starting with the last round and go to the previous if
       # no finished time found. Note that this can only happen
       # if tournament is too old to have created/modified info
       # in its schedule data and all of its last round matches

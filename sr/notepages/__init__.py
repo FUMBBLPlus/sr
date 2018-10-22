@@ -1,5 +1,6 @@
 from . import helper
 
+from . import page_barb_masters
 from . import page_rrr_masters
 from . import page_sr
 from . import page_sr_coach_famous
@@ -14,6 +15,7 @@ from . import page_sr_tournaments_pending
 from . import page_xfl_masters
 
 page = {
+    "BARB-w-Masters": page_barb_masters,
     "RRR-Masters": page_rrr_masters,
     "SR": page_sr,
     "SR-Coach-Famous": page_sr_coach_famous,
@@ -28,6 +30,7 @@ page = {
     "XFL-Masters": page_xfl_masters,
 }
 
+del page_barb_masters
 del page_rrr_masters
 del page_sr
 del page_sr_coach_famous

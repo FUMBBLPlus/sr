@@ -143,6 +143,8 @@ def queue_tournamentspage_pending():
 def queue_supplemental_all():
   queue_rrr_masters()
   queue_xfl_masters()
+  for weight in ("LO", "MI", "HI"):
+    queue_barb_masters(weight)
 
 def queue_rrr_masters():
   module = sr.notepages.page["RRR-Masters"]
@@ -151,6 +153,11 @@ def queue_rrr_masters():
 def queue_xfl_masters():
   module = sr.notepages.page["XFL-Masters"]
   postqueue.append((module.NotePage, {}))
+
+def queue_barb_masters(weight):
+  module = sr.notepages.page[f'BARB-w-Masters']
+  np = getattr(module, f'{weight.upper()}_NotePage')
+  postqueue.append((np, {}))
 
 
 
@@ -354,6 +361,18 @@ def post_supplemental():
     "xfl": (
         "XFL Masters",
         queue_xfl_masters,
+    ),
+    "blo": (
+        "BARB Low Masters",
+        lambda: queue_barb_masters("LO"),
+    ),
+    "bmi": (
+        "BARB Mid Masters",
+        lambda: queue_barb_masters("MI"),
+    ),
+    "bhi": (
+        "BARB High Masters",
+        lambda: queue_barb_masters("HI"),
     ),
     "e": (
         "exit",

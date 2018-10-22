@@ -89,9 +89,10 @@ class _NotePage(helper._NotePage):
     for T in sorted(sr.tournament.added()):
       if T.group.id != groupId:
         continue
-      if T.srnteams not in srnteamsrange:
-        continue
       if T.status != "completed":
+        continue
+      if T.srnteams not in srnteamsrange:
+        #print(T)
         continue
       for TP in T.teamperformances:
         if not TP.team.roster:
@@ -116,8 +117,11 @@ class _NotePage(helper._NotePage):
       flag = "W"
     elif TP.results[-1][0] in self.finalistresults:
       flag = "f"
-    else:
+    elif {r[2] for r in TP.results if r[2]}:  # played
       flag = "•"
+    else:
+      #print(T, TP, TP.team, TP.results)
+      return
     coach = TP.team.coach
     if coach not in d:
       d[coach] = {sh: None for sh in self.rostershorthands}

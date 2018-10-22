@@ -64,7 +64,10 @@ def fumbblyears(*, rebuild=False):
   if _fumbblyears is ... or rebuild:
     result = {}
     y = 1
-    d = collections.deque(sr.tournament.fumbblcups())
+    d = collections.deque(
+        T for T in sr.tournament.fumbblcups()
+        if T.status == "completed"
+    )
     while d:
       T = d.popleft()
       if y == 1:
@@ -152,10 +155,15 @@ def tz_aware(datetimeobj):
   return False
 
 
+def to_tz_unaware(datetimeobj):
+  # https://stackoverflow.com/a/10944136/2334951
+  return datetimeobj.replace(tzinfo=None)
+
+
 def weekNr(datetimeobj):
   dt = datetimeobj
   if hasattr(dt, "microsecond"):
-    days = (dt - ZEROTIME).days
+    days = (to_tz_unaware(dt) - to_tz_unaware(ZEROTIME)).days
   else:
     days = (dt - ZERODATE).days
   return math.floor(days / 7)
