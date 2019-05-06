@@ -565,6 +565,7 @@ def edit_tournaments(tournaments=None):
 
 def main():
   while True:
+    print(f'Tournaments: {len(sr.tournament.added())}')
     print("Options:")
     print("  1: edit/review changed tournaments")
     print("  2: edit searched tournaments")
