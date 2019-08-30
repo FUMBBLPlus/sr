@@ -5,9 +5,11 @@ import re
 import sr
 from .. import bbcode
 from . import helper
-from . import page_rrr_masters
+from . import page_rrr_gmasters
 
-class _NotePage(page_rrr_masters._NotePage):
+class _NotePage(page_rrr_gmasters._NotePage):
+
+  minwon = 2
 
   def iter_teamperformances(self):
     groupIds = 2410, 10407
@@ -35,5 +37,5 @@ class _NotePage(page_rrr_masters._NotePage):
 
 
 NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "XFL-Masters"
+    "XFL-GrandMasters"
 )  # singleton

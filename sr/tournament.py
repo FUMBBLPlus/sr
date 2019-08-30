@@ -1119,7 +1119,7 @@ def sort(tournaments, *, reverse=False):
           else t.main.srenterweekNr
       ),
       (t.rank == SRClass.MINOR),
-      (slot_key[t.main.srfsgname] if t.main else "?"),
+      (slot_key[t.main.srfsgname] if t.main else 9),
       (t.main.srname if t.main else "?"),
       -t.level,
       t.id,

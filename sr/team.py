@@ -59,9 +59,13 @@ class Team(metaclass=sr.helper.InstanceRepeater):
   @property
   def apidata(self):
     if self._apidata is ...:
-      self._apidata = fumbblapi.get__team(self.id)
-      if self._apidata == json.loads(self.NO_TEAM):
+      try:
+        self._apidata = fumbblapi.get__team(self.id)
+      except json.decoder.JSONDecodeError:
         self._apidata = None
+      else:
+        if self._apidata == json.loads(self.NO_TEAM):
+          self._apidata = None
     return self._apidata
 
   @property

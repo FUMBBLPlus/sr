@@ -7,6 +7,8 @@ from . import helper
 
 class NotePage(helper.NotePage):
 
+  minval = 200
+
   def content(self):
     return super().content(
         table = self.table,
@@ -67,7 +69,7 @@ class NotePage(helper.NotePage):
         else:
           N = str(rownum)
         Fval = famous[Pe]
-        if Fval < 100:
+        if Fval < self.minval:
           break
         Coach = helper.bbccoach(Pe)
         F = str(famous[Pe])

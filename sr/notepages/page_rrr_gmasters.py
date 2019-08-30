@@ -22,7 +22,7 @@ class _NotePage(helper._NotePage):
       Result.conceded,
       Result.fortfeit,
   }
-  minwon = 1
+  minwon = 2
 
   def __init__(self, link):
     super().__init__(link)
@@ -188,14 +188,14 @@ class _NotePage(helper._NotePage):
             sh = rostershorthands[i]
             flag, T = v
             row.append(
-                f'[block tooltip={sh}]'
-                + helper.bbctournament(
+                #f'[block tooltip={sh}]' +
+                helper.bbctournament(
                     T,
                     name=flag,
                     boldface_titled=False,
                     italic_notinyear=False,
                     )
-                + "[/block]"
+                #+ "[/block]"
             )
         yield row
         prevNr = nr
@@ -223,5 +223,5 @@ class _NotePage(helper._NotePage):
 
 
 NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "RRR-Masters"
+    "RRR-GrandMasters"
 )  # singleton

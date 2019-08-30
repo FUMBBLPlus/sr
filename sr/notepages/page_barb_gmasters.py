@@ -5,9 +5,11 @@ import re
 import sr
 from .. import bbcode
 from . import helper
-from . import page_rrr_masters
+from . import page_rrr_gmasters
 
-class _NotePage(page_rrr_masters._NotePage):
+class _NotePage(page_rrr_gmasters._NotePage):
+
+  minwon = 1
 
   def iter_teamperformances(self):
     bracket = self.link.split("-")[1].upper()
@@ -29,11 +31,11 @@ class _NotePage(page_rrr_masters._NotePage):
 
 
 LO_NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "BARB-LO-Masters"
+    "BARB-LO-GrandMasters"
 )  # singleton
 MI_NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "BARB-MI-Masters"
+    "BARB-MI-GrandMasters"
 )  # singleton
 HI_NotePage = sr.helper.idkey("link", str)(_NotePage)(
-    "BARB-HI-Masters"
+    "BARB-HI-GrandMasters"
 )  # singleton
