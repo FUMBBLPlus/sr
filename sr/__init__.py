@@ -17,10 +17,13 @@ from . import report
 from . import roster
 from . import slot
 from . import team
-from . import tournament
+try:
+    from . import tournament
+except:
+    pass
+else:
+    # second pass modules
+    from . import performance
 
-# second pass modules
-from . import performance
-
-# pages
-from . import notepages
+    # pages
+    from . import notepages

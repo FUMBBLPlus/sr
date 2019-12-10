@@ -488,6 +488,7 @@ if __name__ == "__main__":
       print(usage)
       sys.exit()
   try:
+    sr.helper.ensure_logged_in()
     main()
   except KeyboardInterrupt:
     pass

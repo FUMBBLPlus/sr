@@ -461,7 +461,6 @@ class CallerInput(OptionsInput):
       raise self.CallerInPutException()
 
 
-
 def ensure_logged_in(interactive=True):
   if S is None:
     raise _S_importerror
@@ -470,14 +469,14 @@ def ensure_logged_in(interactive=True):
     user_name = sr.loginsettings["user_name"]
     if user_name is None and interactive:
       user_name = input(f'user name {INPUT_PROMPT}')
-      save_user_name = input_yesno("should get saved (Y/N)?")
+      save_user_name = YesNoInput("should get saved (Y/N)?")()
       if save_user_name:
         sr.loginsettings["user_name"] = user_name
     password = sr.loginsettings["password"]
     if password is None and interactive:
       password = getpass.getpass(f'password {INPUT_PROMPT}')
       if save_user_name:
-        save_password = input_yesno("should get saved (Y/N)?")
+        save_password = YesNoInput("should get saved (Y/N)?")()
         if save_password:
           sr.loginsettings["password"] = password
     S.log_in(user_name, password)

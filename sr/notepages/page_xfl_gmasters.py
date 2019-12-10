@@ -9,7 +9,7 @@ from . import page_rrr_gmasters
 
 class _NotePage(page_rrr_gmasters._NotePage):
 
-  minwon = 2
+  minwon = 1
 
   def iter_teamperformances(self):
     groupIds = 2410, 10407

@@ -22,7 +22,7 @@ class _NotePage(helper._NotePage):
       Result.conceded,
       Result.fortfeit,
   }
-  minwon = 2
+  minwon = 1
 
   def __init__(self, link):
     super().__init__(link)

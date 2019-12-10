@@ -563,12 +563,29 @@ def edit_tournaments(tournaments=None):
         input_tournamentdone(T)
 
 
+def year_end_exit_weeknumber():
+  fc = sr.tournament.fumbblcups()[-1]
+  weekNr = fc.srenterweekNr
+  tournaments0 = sr.tournament.offumbblyear(fc.fumbblyear)
+  tournaments = sorted(
+      T for T in tournaments0
+      if T.ismain
+      and not T.srtitle
+      and T.srexitweekNr is None
+  )
+  for T in tournaments:
+    srexitweekNr = max(weekNr, T.srenterweekNr + 52)
+    T.srexitweekNr = srexitweekNr
+  print(", ".join(str(T) for T in tournaments))
+
+
 def main():
   while True:
     print(f'Tournaments: {len(sr.tournament.added())}')
     print("Options:")
     print("  1: edit/review changed tournaments")
     print("  2: edit searched tournaments")
+    print("  3: year end exit weeknumber set")
     print("  S: save and quit")
     print("  Q: quit without saving")
     while True:
@@ -581,6 +598,12 @@ def main():
         break
       elif I in ("2", "EDIT SEARCHED", "SEARCH"):
         edit_searched_tournaments()
+        print()
+        print("=" * 79)
+        print()
+        break
+      elif I in ("3", "YEAR END", "EXIT"):
+        year_end_exit_weeknumber()
         print()
         print("=" * 79)
         print()

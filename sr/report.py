@@ -45,7 +45,12 @@ class Report(metaclass=sr.helper.InstanceRepeater):
   @classmethod
   @sr.helper.default_from_func("weekNr", sr.time.current_weekNr)
   def ofweekNr(cls, weekNr):
-    nr = weekNrs()[weekNr]
+    nr = None
+    weekNr = weekNr
+    weekNrs_ = weekNrs()
+    while not nr:
+      nr = weekNrs_.get(weekNr)
+      weekNr -= 1
     return cls(nr)
 
   def __init__(self, nr: int):
